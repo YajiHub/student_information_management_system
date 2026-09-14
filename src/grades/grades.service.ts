@@ -84,16 +84,19 @@ export class GradesService {
       where.enrollment_id = enrollmentId;
     }
 
+    const enrollmentWhere: Prisma.EnrollmentWhereInput = {};
+
     if (studentId) {
-      where.enrollment = { student_id: studentId };
+      enrollmentWhere.student_id = studentId;
     }
 
     // If Instructor, restrict to grades of their assigned offerings
-    if (currentUser.role === Role.INSTRUCTOR) {
-      where.enrollment = {
-        ...(where.enrollment || {}),
-        course_offering: { instructor_id: currentUser.id },
-      };
+    if (currentUser && currentUser.role === Role.INSTRUCTOR) {
+      enrollmentWhere.course_offering = { instructor_id: currentUser.id };
+    }
+
+    if (Object.keys(enrollmentWhere).length > 0) {
+      where.enrollment = enrollmentWhere;
     }
 
     const grades = await this.prisma.grade.findMany({

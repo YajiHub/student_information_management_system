@@ -1,0 +1,2215 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful"
+          },
+          "401": {
+            "description": "Invalid email or password"
+          },
+          "422": {
+            "description": "Validation error in request payload"
+          }
+        },
+        "summary": "Authenticate user credentials and issue JWT bearer token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Logged out successfully"
+          },
+          "401": {
+            "description": "Missing or invalid authentication"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invalidate current session / clear authentication state",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "AuthController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current user profile retrieved"
+          },
+          "401": {
+            "description": "Missing or invalid authentication"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve authenticated user profile and roles",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/programs": {
+      "post": {
+        "operationId": "ProgramsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProgramDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Program created successfully"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "409": {
+            "description": "Program code already exists"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Create a new academic program (Admin/Registrar only)",
+        "tags": [
+          "Programs"
+        ]
+      },
+      "get": {
+        "operationId": "ProgramsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Programs retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "List all academic programs",
+        "tags": [
+          "Programs"
+        ]
+      }
+    },
+    "/api/v1/programs/{id}": {
+      "get": {
+        "operationId": "ProgramsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Program details retrieved"
+          },
+          "404": {
+            "description": "Program not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Retrieve an academic program by ID",
+        "tags": [
+          "Programs"
+        ]
+      },
+      "put": {
+        "operationId": "ProgramsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProgramDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Program updated successfully"
+          },
+          "404": {
+            "description": "Program not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Update an academic program (Admin/Registrar only)",
+        "tags": [
+          "Programs"
+        ]
+      },
+      "delete": {
+        "operationId": "ProgramsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Program deleted successfully"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "404": {
+            "description": "Program not found"
+          },
+          "409": {
+            "description": "Conflict: associated students exist"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Delete an academic program (Admin only)",
+        "tags": [
+          "Programs"
+        ]
+      }
+    },
+    "/api/v1/courses": {
+      "post": {
+        "operationId": "CoursesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Course created successfully"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "409": {
+            "description": "Course code already exists"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Create a new course catalog record (Admin/Registrar only)",
+        "tags": [
+          "Courses"
+        ]
+      },
+      "get": {
+        "operationId": "CoursesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Courses retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "List all courses in catalog",
+        "tags": [
+          "Courses"
+        ]
+      }
+    },
+    "/api/v1/courses/{id}": {
+      "get": {
+        "operationId": "CoursesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course details retrieved"
+          },
+          "404": {
+            "description": "Course not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Retrieve a course by ID",
+        "tags": [
+          "Courses"
+        ]
+      },
+      "put": {
+        "operationId": "CoursesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCourseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Course updated successfully"
+          },
+          "404": {
+            "description": "Course not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Update a course record (Admin/Registrar only)",
+        "tags": [
+          "Courses"
+        ]
+      },
+      "delete": {
+        "operationId": "CoursesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course deleted successfully"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "409": {
+            "description": "Conflict: active offerings exist"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Delete a course record (Admin only)",
+        "tags": [
+          "Courses"
+        ]
+      }
+    },
+    "/api/v1/academic-terms": {
+      "post": {
+        "operationId": "AcademicTermsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAcademicTermDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Academic term created successfully"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "409": {
+            "description": "Academic term already exists"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Create a new academic term/semester (Admin/Registrar only)",
+        "tags": [
+          "Academic Terms"
+        ]
+      },
+      "get": {
+        "operationId": "AcademicTermsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Academic terms retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "List all academic terms",
+        "tags": [
+          "Academic Terms"
+        ]
+      }
+    },
+    "/api/v1/academic-terms/{id}": {
+      "get": {
+        "operationId": "AcademicTermsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Academic term details retrieved"
+          },
+          "404": {
+            "description": "Academic term not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Retrieve an academic term by ID",
+        "tags": [
+          "Academic Terms"
+        ]
+      },
+      "put": {
+        "operationId": "AcademicTermsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAcademicTermDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Academic term updated successfully"
+          },
+          "404": {
+            "description": "Academic term not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Update an academic term (Admin/Registrar only)",
+        "tags": [
+          "Academic Terms"
+        ]
+      },
+      "delete": {
+        "operationId": "AcademicTermsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Academic term deleted successfully"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "404": {
+            "description": "Academic term not found"
+          },
+          "409": {
+            "description": "Conflict: active offerings exist"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Delete an academic term (Admin only)",
+        "tags": [
+          "Academic Terms"
+        ]
+      }
+    },
+    "/api/v1/students": {
+      "post": {
+        "operationId": "StudentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStudentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Student created successfully"
+          },
+          "400": {
+            "description": "Referenced program does not exist"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "409": {
+            "description": "Duplicate student number or email"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Create a new student record (Admin/Registrar only)",
+        "tags": [
+          "Students"
+        ]
+      },
+      "get": {
+        "operationId": "StudentsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "per_page",
+            "required": false,
+            "in": "query",
+            "description": "Records per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort by",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "program_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by program ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "year_level",
+            "required": false,
+            "in": "query",
+            "description": "Filter by year level (1-5)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by student status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "GRADUATED",
+                "DROPPED"
+              ]
+            }
+          },
+          {
+            "name": "student_type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by REGULAR or IRREGULAR classification",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "REGULAR",
+                "IRREGULAR"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Students collection retrieved"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "List students with search, filters, sorting, and pagination",
+        "tags": [
+          "Students"
+        ]
+      }
+    },
+    "/api/v1/students/{id}": {
+      "get": {
+        "operationId": "StudentsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student details retrieved"
+          },
+          "403": {
+            "description": "Forbidden: Cannot access another student profile"
+          },
+          "404": {
+            "description": "Student not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Retrieve student details by ID (Admin, Registrar, or Owner Student)",
+        "tags": [
+          "Students"
+        ]
+      },
+      "put": {
+        "operationId": "StudentsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStudentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Student updated successfully"
+          },
+          "404": {
+            "description": "Student not found"
+          },
+          "409": {
+            "description": "Conflict: duplicate student number or email"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Update a student record (Admin/Registrar only)",
+        "tags": [
+          "Students"
+        ]
+      },
+      "delete": {
+        "operationId": "StudentsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student deleted successfully"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "404": {
+            "description": "Student not found"
+          },
+          "409": {
+            "description": "Conflict: active enrollments exist"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Delete a student record (Admin only)",
+        "tags": [
+          "Students"
+        ]
+      }
+    },
+    "/api/v1/students/{id}/enrollments": {
+      "get": {
+        "operationId": "StudentsController_getEnrollments",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student enrollments retrieved"
+          },
+          "403": {
+            "description": "Forbidden: Cannot access another student enrollments"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Retrieve student enrollments (Admin, Registrar, or Owner Student)",
+        "tags": [
+          "Students"
+        ]
+      }
+    },
+    "/api/v1/students/{id}/grades": {
+      "get": {
+        "operationId": "StudentsController_getGrades",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student grades retrieved"
+          },
+          "403": {
+            "description": "Forbidden: Cannot access another student grades"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Retrieve student grade sheet (Admin, Registrar, or Owner Student)",
+        "tags": [
+          "Students"
+        ]
+      }
+    },
+    "/api/v1/students/{id}/academic-record": {
+      "get": {
+        "operationId": "StudentsController_getAcademicRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Academic record report retrieved"
+          },
+          "403": {
+            "description": "Forbidden: Cannot access another student academic record"
+          },
+          "404": {
+            "description": "Student not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Retrieve aggregated student academic transcript by term (Admin, Registrar, or Owner Student)",
+        "tags": [
+          "Students"
+        ]
+      }
+    },
+    "/api/v1/course-offerings": {
+      "post": {
+        "operationId": "CourseOfferingsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseOfferingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Course offering created successfully"
+          },
+          "400": {
+            "description": "Referenced course, term, or instructor does not exist"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Create a new course offering / class section (Admin/Registrar only)",
+        "tags": [
+          "Course Offerings"
+        ]
+      },
+      "get": {
+        "operationId": "CourseOfferingsController_findAll",
+        "parameters": [
+          {
+            "name": "course_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Course ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "academic_term_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Academic Term ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "instructor_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Instructor (User) ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "section",
+            "required": false,
+            "in": "query",
+            "description": "Filter by section name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course offerings retrieved"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "List course offerings (Instructors automatically filtered to assigned sections)",
+        "tags": [
+          "Course Offerings"
+        ]
+      }
+    },
+    "/api/v1/course-offerings/{id}": {
+      "get": {
+        "operationId": "CourseOfferingsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course offering details retrieved"
+          },
+          "404": {
+            "description": "Course offering not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Retrieve a course offering by ID",
+        "tags": [
+          "Course Offerings"
+        ]
+      },
+      "put": {
+        "operationId": "CourseOfferingsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCourseOfferingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Course offering updated"
+          },
+          "404": {
+            "description": "Course offering not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Update a course offering (Admin/Registrar only)",
+        "tags": [
+          "Course Offerings"
+        ]
+      },
+      "delete": {
+        "operationId": "CourseOfferingsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course offering deleted"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "404": {
+            "description": "Course offering not found"
+          },
+          "409": {
+            "description": "Conflict: active student enrollments exist"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Delete a course offering (Admin only)",
+        "tags": [
+          "Course Offerings"
+        ]
+      }
+    },
+    "/api/v1/course-offerings/{id}/students": {
+      "get": {
+        "operationId": "CourseOfferingsController_getStudents",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Enrolled students retrieved"
+          },
+          "403": {
+            "description": "Forbidden: Instructor not assigned to this offering"
+          },
+          "404": {
+            "description": "Course offering not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "List all students enrolled in a course offering",
+        "tags": [
+          "Course Offerings"
+        ]
+      }
+    },
+    "/api/v1/enrollments": {
+      "post": {
+        "operationId": "EnrollmentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEnrollmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Student enrolled successfully"
+          },
+          "400": {
+            "description": "Capacity reached, max units exceeded, or invalid references"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized roles"
+          },
+          "409": {
+            "description": "Conflict: student is already enrolled in this offering"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Enroll a student into a course offering (Admin/Registrar only)",
+        "tags": [
+          "Enrollments"
+        ]
+      },
+      "get": {
+        "operationId": "EnrollmentsController_findAll",
+        "parameters": [
+          {
+            "name": "student_id",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "course_offering_id",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Enrollments retrieved successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "List all enrollments with optional filters",
+        "tags": [
+          "Enrollments"
+        ]
+      }
+    },
+    "/api/v1/enrollments/{id}": {
+      "get": {
+        "operationId": "EnrollmentsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Enrollment details retrieved"
+          },
+          "404": {
+            "description": "Enrollment record not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Retrieve enrollment details by ID",
+        "tags": [
+          "Enrollments"
+        ]
+      },
+      "patch": {
+        "operationId": "EnrollmentsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEnrollmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Enrollment status updated"
+          },
+          "404": {
+            "description": "Enrollment not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Update enrollment status (e.g. DROPPED, COMPLETED)",
+        "tags": [
+          "Enrollments"
+        ]
+      },
+      "delete": {
+        "operationId": "EnrollmentsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Enrollment deleted successfully"
+          },
+          "404": {
+            "description": "Enrollment not found"
+          },
+          "409": {
+            "description": "Cannot delete enrollment with recorded grades"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Cancel/delete an enrollment (Admin/Registrar only)",
+        "tags": [
+          "Enrollments"
+        ]
+      }
+    },
+    "/api/v1/grades": {
+      "post": {
+        "operationId": "GradesController_encode",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EncodeGradeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Grade encoded successfully"
+          },
+          "403": {
+            "description": "Forbidden: Instructor not assigned to this course offering"
+          },
+          "404": {
+            "description": "Enrollment record not found"
+          },
+          "409": {
+            "description": "Grade already encoded; use PUT to update"
+          },
+          "422": {
+            "description": "Validation error in grade limits"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Encode midterm and final grades for an enrollment (Authorized Instructor or Admin)",
+        "tags": [
+          "Grades"
+        ]
+      },
+      "get": {
+        "operationId": "GradesController_findAll",
+        "parameters": [
+          {
+            "name": "enrollment_id",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "student_id",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grades list retrieved"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "List grades (Instructors filtered to assigned sections)",
+        "tags": [
+          "Grades"
+        ]
+      }
+    },
+    "/api/v1/grades/{id}": {
+      "get": {
+        "operationId": "GradesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grade record retrieved"
+          },
+          "403": {
+            "description": "Forbidden for unauthorized instructors"
+          },
+          "404": {
+            "description": "Grade not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Retrieve grade record by ID",
+        "tags": [
+          "Grades"
+        ]
+      },
+      "put": {
+        "operationId": "GradesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGradeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Grade updated successfully"
+          },
+          "403": {
+            "description": "Forbidden: Instructor not assigned to this course offering"
+          },
+          "404": {
+            "description": "Grade not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Update an existing grade record (Authorized Instructor or Admin)",
+        "tags": [
+          "Grades"
+        ]
+      },
+      "delete": {
+        "operationId": "GradesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grade record deleted"
+          },
+          "403": {
+            "description": "Forbidden for non-admin roles"
+          },
+          "404": {
+            "description": "Grade not found"
+          }
+        },
+        "security": [
+          {
+            "bearer-jwt": []
+          }
+        ],
+        "summary": "Delete a grade record (Admin only)",
+        "tags": [
+          "Grades"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Student Information Management System REST API",
+    "description": "Comprehensive RESTful API for Student Information Management System (SIMS). Developed for Special Topics Laboratory Activity II.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer-jwt": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "name": "JWT",
+        "description": "Enter JWT access token",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@sims.edu",
+            "description": "User account email"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123!",
+            "description": "User account password"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "CreateProgramDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "BSIT",
+            "description": "Unique academic program code"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bachelor of Science in Information Technology",
+            "description": "Program title/name"
+          },
+          "description": {
+            "type": "string",
+            "example": "Undergraduate degree focusing on software development and networks",
+            "description": "Detailed program description"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "default": "ACTIVE"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ]
+      },
+      "UpdateProgramDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "BSIT",
+            "description": "Unique academic program code"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bachelor of Science in Information Technology",
+            "description": "Program title/name"
+          },
+          "description": {
+            "type": "string",
+            "example": "Undergraduate degree focusing on software development and networks",
+            "description": "Detailed program description"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "default": "ACTIVE"
+          }
+        }
+      },
+      "CreateCourseDto": {
+        "type": "object",
+        "properties": {
+          "course_code": {
+            "type": "string",
+            "example": "IT312",
+            "description": "Unique course/subject code"
+          },
+          "course_title": {
+            "type": "string",
+            "example": "Web Systems and Technologies 2",
+            "description": "Course title"
+          },
+          "description": {
+            "type": "string",
+            "example": "Advanced client-side and server-side web development",
+            "description": "Course description"
+          },
+          "units": {
+            "type": "number",
+            "example": 3,
+            "description": "Academic credit units",
+            "default": 3
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "default": "ACTIVE"
+          }
+        },
+        "required": [
+          "course_code",
+          "course_title"
+        ]
+      },
+      "UpdateCourseDto": {
+        "type": "object",
+        "properties": {
+          "course_code": {
+            "type": "string",
+            "example": "IT312",
+            "description": "Unique course/subject code"
+          },
+          "course_title": {
+            "type": "string",
+            "example": "Web Systems and Technologies 2",
+            "description": "Course title"
+          },
+          "description": {
+            "type": "string",
+            "example": "Advanced client-side and server-side web development",
+            "description": "Course description"
+          },
+          "units": {
+            "type": "number",
+            "example": 3,
+            "description": "Academic credit units",
+            "default": 3
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "default": "ACTIVE"
+          }
+        }
+      },
+      "CreateAcademicTermDto": {
+        "type": "object",
+        "properties": {
+          "academic_year": {
+            "type": "string",
+            "example": "2026-2027",
+            "description": "Academic year format YYYY-YYYY"
+          },
+          "semester": {
+            "type": "string",
+            "enum": [
+              "FIRST_SEMESTER",
+              "SECOND_SEMESTER",
+              "SUMMER"
+            ],
+            "example": "FIRST_SEMESTER",
+            "description": "Semester classification"
+          },
+          "start_date": {
+            "type": "string",
+            "example": "2026-08-15T00:00:00.000Z",
+            "description": "Term start date"
+          },
+          "end_date": {
+            "type": "string",
+            "example": "2026-12-20T00:00:00.000Z",
+            "description": "Term end date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "default": "ACTIVE"
+          }
+        },
+        "required": [
+          "academic_year",
+          "semester",
+          "start_date",
+          "end_date"
+        ]
+      },
+      "UpdateAcademicTermDto": {
+        "type": "object",
+        "properties": {
+          "academic_year": {
+            "type": "string",
+            "example": "2026-2027",
+            "description": "Academic year format YYYY-YYYY"
+          },
+          "semester": {
+            "type": "string",
+            "enum": [
+              "FIRST_SEMESTER",
+              "SECOND_SEMESTER",
+              "SUMMER"
+            ],
+            "example": "FIRST_SEMESTER",
+            "description": "Semester classification"
+          },
+          "start_date": {
+            "type": "string",
+            "example": "2026-08-15T00:00:00.000Z",
+            "description": "Term start date"
+          },
+          "end_date": {
+            "type": "string",
+            "example": "2026-12-20T00:00:00.000Z",
+            "description": "Term end date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "default": "ACTIVE"
+          }
+        }
+      },
+      "CreateStudentDto": {
+        "type": "object",
+        "properties": {
+          "student_number": {
+            "type": "string",
+            "example": "2026-00001",
+            "description": "Unique student number in YYYY-NNNNN format"
+          },
+          "first_name": {
+            "type": "string",
+            "example": "Juan",
+            "description": "First name"
+          },
+          "middle_name": {
+            "type": "string",
+            "example": "Protacio",
+            "description": "Middle name"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Dela Cruz",
+            "description": "Last name"
+          },
+          "suffix": {
+            "type": "string",
+            "example": "Jr.",
+            "description": "Name suffix (Jr., III, etc.)"
+          },
+          "birth_date": {
+            "type": "string",
+            "example": "2004-06-19T00:00:00.000Z",
+            "description": "Birth date"
+          },
+          "email": {
+            "type": "string",
+            "example": "juan.delacruz@sims.edu",
+            "description": "Student official email"
+          },
+          "contact_number": {
+            "type": "string",
+            "example": "+639171234567",
+            "description": "Contact mobile number"
+          },
+          "address": {
+            "type": "string",
+            "example": "123 Sampaguita St, Manila",
+            "description": "Residential address"
+          },
+          "program_id": {
+            "type": "number",
+            "example": 1,
+            "description": "ID of academic program"
+          },
+          "user_id": {
+            "type": "number",
+            "example": 5,
+            "description": "Linked system user ID for student portal access"
+          },
+          "year_level": {
+            "type": "number",
+            "example": 1,
+            "description": "Current year level (1-4)",
+            "default": 1
+          },
+          "student_type": {
+            "type": "string",
+            "enum": [
+              "REGULAR",
+              "IRREGULAR"
+            ],
+            "default": "REGULAR",
+            "description": "Student academic load classification"
+          },
+          "max_allowed_units": {
+            "type": "number",
+            "example": 24,
+            "description": "Maximum allowed academic units for the term",
+            "default": 24
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "GRADUATED",
+              "DROPPED"
+            ],
+            "default": "ACTIVE",
+            "description": "Current enrollment status"
+          }
+        },
+        "required": [
+          "student_number",
+          "first_name",
+          "last_name",
+          "birth_date",
+          "email",
+          "program_id"
+        ]
+      },
+      "UpdateStudentDto": {
+        "type": "object",
+        "properties": {
+          "student_number": {
+            "type": "string",
+            "example": "2026-00001",
+            "description": "Unique student number in YYYY-NNNNN format"
+          },
+          "first_name": {
+            "type": "string",
+            "example": "Juan",
+            "description": "First name"
+          },
+          "middle_name": {
+            "type": "string",
+            "example": "Protacio",
+            "description": "Middle name"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Dela Cruz",
+            "description": "Last name"
+          },
+          "suffix": {
+            "type": "string",
+            "example": "Jr.",
+            "description": "Name suffix (Jr., III, etc.)"
+          },
+          "birth_date": {
+            "type": "string",
+            "example": "2004-06-19T00:00:00.000Z",
+            "description": "Birth date"
+          },
+          "email": {
+            "type": "string",
+            "example": "juan.delacruz@sims.edu",
+            "description": "Student official email"
+          },
+          "contact_number": {
+            "type": "string",
+            "example": "+639171234567",
+            "description": "Contact mobile number"
+          },
+          "address": {
+            "type": "string",
+            "example": "123 Sampaguita St, Manila",
+            "description": "Residential address"
+          },
+          "program_id": {
+            "type": "number",
+            "example": 1,
+            "description": "ID of academic program"
+          },
+          "user_id": {
+            "type": "number",
+            "example": 5,
+            "description": "Linked system user ID for student portal access"
+          },
+          "year_level": {
+            "type": "number",
+            "example": 1,
+            "description": "Current year level (1-4)",
+            "default": 1
+          },
+          "student_type": {
+            "type": "string",
+            "enum": [
+              "REGULAR",
+              "IRREGULAR"
+            ],
+            "default": "REGULAR",
+            "description": "Student academic load classification"
+          },
+          "max_allowed_units": {
+            "type": "number",
+            "example": 24,
+            "description": "Maximum allowed academic units for the term",
+            "default": 24
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "GRADUATED",
+              "DROPPED"
+            ],
+            "default": "ACTIVE",
+            "description": "Current enrollment status"
+          }
+        }
+      },
+      "CreateCourseOfferingDto": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "number",
+            "example": 1,
+            "description": "Course ID"
+          },
+          "academic_term_id": {
+            "type": "number",
+            "example": 1,
+            "description": "Academic Term ID"
+          },
+          "instructor_id": {
+            "type": "number",
+            "example": 3,
+            "description": "Instructor (User) ID"
+          },
+          "section": {
+            "type": "string",
+            "example": "4A",
+            "description": "Class section name/code"
+          },
+          "schedule": {
+            "type": "string",
+            "example": "MW 09:00 - 10:30",
+            "description": "Weekly class schedule"
+          },
+          "room": {
+            "type": "string",
+            "example": "Computer Lab 3",
+            "description": "Classroom / Laboratory room"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 40,
+            "description": "Maximum student capacity",
+            "default": 40
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "default": "ACTIVE"
+          }
+        },
+        "required": [
+          "course_id",
+          "academic_term_id",
+          "instructor_id",
+          "section",
+          "schedule",
+          "room"
+        ]
+      },
+      "UpdateCourseOfferingDto": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "number",
+            "example": 1,
+            "description": "Course ID"
+          },
+          "academic_term_id": {
+            "type": "number",
+            "example": 1,
+            "description": "Academic Term ID"
+          },
+          "instructor_id": {
+            "type": "number",
+            "example": 3,
+            "description": "Instructor (User) ID"
+          },
+          "section": {
+            "type": "string",
+            "example": "4A",
+            "description": "Class section name/code"
+          },
+          "schedule": {
+            "type": "string",
+            "example": "MW 09:00 - 10:30",
+            "description": "Weekly class schedule"
+          },
+          "room": {
+            "type": "string",
+            "example": "Computer Lab 3",
+            "description": "Classroom / Laboratory room"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 40,
+            "description": "Maximum student capacity",
+            "default": 40
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "default": "ACTIVE"
+          }
+        }
+      },
+      "CreateEnrollmentDto": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "number",
+            "example": 1,
+            "description": "Student ID to enroll"
+          },
+          "course_offering_id": {
+            "type": "number",
+            "example": 1,
+            "description": "Course Offering ID"
+          },
+          "enrollment_date": {
+            "type": "string",
+            "example": "2026-08-20T00:00:00.000Z",
+            "description": "Date of enrollment"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ENROLLED",
+              "DROPPED",
+              "COMPLETED"
+            ],
+            "default": "ENROLLED"
+          }
+        },
+        "required": [
+          "student_id",
+          "course_offering_id"
+        ]
+      },
+      "UpdateEnrollmentDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ENROLLED",
+              "DROPPED",
+              "COMPLETED"
+            ],
+            "example": "DROPPED"
+          }
+        }
+      },
+      "EncodeGradeDto": {
+        "type": "object",
+        "properties": {
+          "enrollment_id": {
+            "type": "number",
+            "example": 1,
+            "description": "Enrollment record ID"
+          },
+          "midterm_grade": {
+            "type": "number",
+            "example": 1.75,
+            "description": "Midterm grade (1.00 - 5.00 grading scale)"
+          },
+          "final_grade": {
+            "type": "number",
+            "example": 1.5,
+            "description": "Final grade rating (1.00 - 5.00 grading scale)"
+          },
+          "remarks": {
+            "type": "string",
+            "example": "PASSED",
+            "description": "Academic remarks (PASSED, FAILED, INCOMPLETE)"
+          }
+        },
+        "required": [
+          "enrollment_id"
+        ]
+      },
+      "UpdateGradeDto": {
+        "type": "object",
+        "properties": {
+          "midterm_grade": {
+            "type": "number",
+            "example": 1.75,
+            "description": "Midterm grade (1.00 - 5.00)"
+          },
+          "final_grade": {
+            "type": "number",
+            "example": 1.5,
+            "description": "Final grade rating (1.00 - 5.00)"
+          },
+          "remarks": {
+            "type": "string",
+            "example": "PASSED",
+            "description": "Academic remarks"
+          }
+        }
+      }
+    }
+  }
+}

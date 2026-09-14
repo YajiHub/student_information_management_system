@@ -1,0 +1,484 @@
+{
+  "info": {
+    "name": "Student Information Management System (SIMS) REST API",
+    "description": "Postman API Collection for Laboratory Activity II. Covers all 9 required resource groups with positive and negative testing cases.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "instructorToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "studentToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 - Authentication",
+      "item": [
+        {
+          "name": "Login - Admin (Save Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.access_token) {",
+                  "    pm.collectionVariables.set('adminToken', jsonData.data.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@sims.edu\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login - Instructor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.access_token) {",
+                  "    pm.collectionVariables.set('instructorToken', jsonData.data.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"prof.cruz@sims.edu\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login - Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.access_token) {",
+                  "    pm.collectionVariables.set('studentToken', jsonData.data.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student.juan@sims.edu\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Get Current User Profile (/me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          }
+        },
+        {
+          "name": "Logout Session",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Programs",
+      "item": [
+        {
+          "name": "List Academic Programs",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/programs", "host": ["{{baseUrl}}"], "path": ["programs"] }
+          }
+        },
+        {
+          "name": "Create Program",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"BSCpE\",\n  \"name\": \"Bachelor of Science in Computer Engineering\",\n  \"description\": \"Embedded systems, robotics, and hardware-software integration.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/programs", "host": ["{{baseUrl}}"], "path": ["programs"] }
+          }
+        },
+        {
+          "name": "Get Program by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/programs/1", "host": ["{{baseUrl}}"], "path": ["programs", "1"] }
+          }
+        },
+        {
+          "name": "Update Program",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bachelor of Science in Information Technology (Updated)\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/programs/1", "host": ["{{baseUrl}}"], "path": ["programs", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Courses",
+      "item": [
+        {
+          "name": "List Courses Catalog",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/courses", "host": ["{{baseUrl}}"], "path": ["courses"] }
+          }
+        },
+        {
+          "name": "Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_code\": \"IT501\",\n  \"course_title\": \"Distributed Systems and Microservices\",\n  \"description\": \"Enterprise distributed computing and container orchestration.\",\n  \"units\": 3\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/courses", "host": ["{{baseUrl}}"], "path": ["courses"] }
+          }
+        },
+        {
+          "name": "Get Course by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/courses/1", "host": ["{{baseUrl}}"], "path": ["courses", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 - Academic Terms",
+      "item": [
+        {
+          "name": "List Academic Terms",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/academic-terms", "host": ["{{baseUrl}}"], "path": ["academic-terms"] }
+          }
+        },
+        {
+          "name": "Create Academic Term",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"academic_year\": \"2027-2028\",\n  \"semester\": \"FIRST_SEMESTER\",\n  \"start_date\": \"2027-08-15T00:00:00.000Z\",\n  \"end_date\": \"2027-12-20T00:00:00.000Z\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/academic-terms", "host": ["{{baseUrl}}"], "path": ["academic-terms"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 - Students",
+      "item": [
+        {
+          "name": "List Students (Search, Filter, Pagination)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/students?search=dela&program_id=1&year_level=4&page=1&per_page=10&sort=last_name&order=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"],
+              "query": [
+                { "key": "search", "value": "dela" },
+                { "key": "program_id", "value": "1" },
+                { "key": "year_level", "value": "4" },
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "10" },
+                { "key": "sort", "value": "last_name" },
+                { "key": "order", "value": "asc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Irregular Students Filter",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/students?student_type=IRREGULAR&page=1&per_page=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"],
+              "query": [
+                { "key": "student_type", "value": "IRREGULAR" },
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Student Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_number\": \"2026-00999\",\n  \"first_name\": \"Gabriela\",\n  \"last_name\": \"Silang\",\n  \"birth_date\": \"2004-03-19T00:00:00.000Z\",\n  \"email\": \"gabriela.silang@sims.edu\",\n  \"contact_number\": \"+639181112233\",\n  \"address\": \"Vigan, Ilocos Sur\",\n  \"program_id\": 1,\n  \"year_level\": 3,\n  \"student_type\": \"REGULAR\",\n  \"max_allowed_units\": 24\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/students", "host": ["{{baseUrl}}"], "path": ["students"] }
+          }
+        },
+        {
+          "name": "Get Student by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/students/1", "host": ["{{baseUrl}}"], "path": ["students", "1"] }
+          }
+        },
+        {
+          "name": "Get Student Academic Record (Aggregated Transcript)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/students/1/academic-record", "host": ["{{baseUrl}}"], "path": ["students", "1", "academic-record"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 - Course Offerings",
+      "item": [
+        {
+          "name": "List Course Offerings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/course-offerings", "host": ["{{baseUrl}}"], "path": ["course-offerings"] }
+          }
+        },
+        {
+          "name": "Create Course Offering",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\": 1,\n  \"academic_term_id\": 1,\n  \"instructor_id\": 3,\n  \"section\": \"BSIT-4A\",\n  \"schedule\": \"MW 13:00 - 14:30\",\n  \"room\": \"Computer Lab 1\",\n  \"capacity\": 40\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/course-offerings", "host": ["{{baseUrl}}"], "path": ["course-offerings"] }
+          }
+        },
+        {
+          "name": "Get Students Enrolled in Offering",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/course-offerings/1/students", "host": ["{{baseUrl}}"], "path": ["course-offerings", "1", "students"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7 - Enrollments",
+      "item": [
+        {
+          "name": "List Enrollments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/enrollments", "host": ["{{baseUrl}}"], "path": ["enrollments"] }
+          }
+        },
+        {
+          "name": "Enroll Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": 2,\n  \"course_offering_id\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/enrollments", "host": ["{{baseUrl}}"], "path": ["enrollments"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8 - Grades",
+      "item": [
+        {
+          "name": "List Grades",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/grades", "host": ["{{baseUrl}}"], "path": ["grades"] }
+          }
+        },
+        {
+          "name": "Encode Grade (Midterm & Final)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enrollment_id\": 105,\n  \"midterm_grade\": 1.75,\n  \"final_grade\": 1.50\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/grades", "host": ["{{baseUrl}}"], "path": ["grades"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9 - Negative & Security Test Cases",
+      "item": [
+        {
+          "name": "401 - Unauthenticated Request",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/students/1", "host": ["{{baseUrl}}"], "path": ["students", "1"] }
+          }
+        },
+        {
+          "name": "403 - Student Attempting to Create Course (Role Forbidden)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_code\": \"HACK101\",\n  \"course_title\": \"Unauthorized Course\",\n  \"units\": 3\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/courses", "host": ["{{baseUrl}}"], "path": ["courses"] }
+          }
+        },
+        {
+          "name": "403 - Student Viewing Peer Academic Record (Object-Level Forbidden)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": { "raw": "{{baseUrl}}/students/2/academic-record", "host": ["{{baseUrl}}"], "path": ["students", "2", "academic-record"] }
+          }
+        },
+        {
+          "name": "404 - Resource Not Found",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/students/999999", "host": ["{{baseUrl}}"], "path": ["students", "999999"] }
+          }
+        },
+        {
+          "name": "409 - Duplicate Student Number",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_number\": \"2026-00001\",\n  \"first_name\": \"Duplicate\",\n  \"last_name\": \"Student\",\n  \"birth_date\": \"2004-01-01T00:00:00.000Z\",\n  \"email\": \"dup.unique@sims.edu\",\n  \"program_id\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/students", "host": ["{{baseUrl}}"], "path": ["students"] }
+          }
+        },
+        {
+          "name": "422 - Validation Failure (Invalid Email & Units)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_code\": \"\",\n  \"course_title\": \"\",\n  \"units\": 99\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/courses", "host": ["{{baseUrl}}"], "path": ["courses"] }
+          }
+        }
+      ]
+    }
+  ]
+}
