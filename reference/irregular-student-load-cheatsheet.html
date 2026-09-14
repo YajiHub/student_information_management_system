@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Reference: Irregular Student Load Management</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.8rem;
+      text-align: left;
+    }
+    th {
+      background-color: var(--card-bg);
+      font-weight: 600;
+    }
+    @media print {
+      body { font-size: 14px; padding: 0; }
+      .container { max-width: 100%; }
+      header { border-bottom-width: 1px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="subtitle">Quick Reference &bull; Architecture Cheat Sheet</div>
+      <h1>Irregular Student Load Architecture</h1>
+      <p><em>Enterprise RESTful API patterns for managing student unit loads and cross-section scheduling.</em></p>
+    </header>
+
+    <main>
+      <h2>1. HTTP Status Code Matrix for Enrollment Failures</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>HTTP Status</th>
+            <th>Error Message Format</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Section full (active enrollments $\ge$ capacity)</td>
+            <td><code>400 Bad Request</code></td>
+            <td><code>"Course offering section is at full capacity"</code></td>
+          </tr>
+          <tr>
+            <td>Term unit sum exceeds <code>max_allowed_units</code></td>
+            <td><code>400 Bad Request</code></td>
+            <td><code>"Enrollment exceeds maximum allowed units for this student (Attempted: X, Allowed: Y)"</code></td>
+          </tr>
+          <tr>
+            <td>Student already enrolled in offering</td>
+            <td><code>409 Conflict</code></td>
+            <td><code>"Student is already enrolled in this course offering"</code></td>
+          </tr>
+          <tr>
+            <td>Missing or malformed payload fields</td>
+            <td><code>422 Unprocessable</code></td>
+            <td><code>"Validation failed"</code> with field error map</td>
+          </tr>
+          <tr>
+            <td>Non-admin user attempts enrollment</td>
+            <td><code>403 Forbidden</code></td>
+            <td><code>"Forbidden resource"</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>2. Prisma Data Models</h2>
+      <pre><code>enum StudentType {
+  REGULAR
+  IRREGULAR
+}
+
+model Student {
+  id                Int         @id @default(autoincrement())
+  student_number    String      @unique
+  student_type      StudentType @default(REGULAR)
+  max_allowed_units Int         @default(24)
+}
+
+model Enrollment {
+  id                 Int            @id @default(autoincrement())
+  student_id         Int
+  course_offering_id Int
+  status             EnrollmentStatus @default(ENROLLED)
+
+  @@unique([student_id, course_offering_id])
+}</code></pre>
+
+      <h2>3. Common Administrative Filter Queries</h2>
+      <ul>
+        <li><code>GET /api/v1/students?student_type=IRREGULAR</code> &mdash; Find all irregular students.</li>
+        <li><code>GET /api/v1/students?student_type=IRREGULAR&amp;year_level=3</code> &mdash; Filter by year level.</li>
+        <li><code>GET /api/v1/students?search=santos&amp;student_type=REGULAR</code> &mdash; Search regular students.</li>
+      </ul>
+    </main>
+
+    <footer>
+      Student Information Management System &bull; <a href="../lessons/0001-irregular-student-load-architecture.html">Return to Lesson 0001</a>
+    </footer>
+  </div>
+</body>
+</html>

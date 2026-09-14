@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0001: Irregular Student Load Architecture</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="subtitle">Lesson 0001 &bull; REST API Engineering</div>
+      <h1>Modeling Irregular Student Unit Loads</h1>
+      <p><em>Tied to: <a href="../MISSION.md">Enterprise RESTful API Development for SIMS</a></em></p>
+    </header>
+
+    <main>
+      <section>
+        <h2>The Core Problem</h2>
+        <p>In standard academic systems, regular students follow fixed cohort blocks (e.g., Block 4A takes exactly 21 prescribed units in Semester 1). However, real-world institutions have <strong>irregular students</strong> who:</p>
+        <ul>
+          <li>Carry failed prerequisites requiring off-sequence retakes.</li>
+          <li>Face academic probation with reduced credit unit caps (e.g., 12 or 15 units instead of 24).</li>
+          <li>Mix courses across multiple year levels and section schedules.</li>
+        </ul>
+        <div class="card">
+          <strong>Key Insight:</strong> Never assume a uniform semester load. Unit limits must be an explicit, student-level attribute, validated transactionally on every enrollment request.
+        </div>
+      </section>
+
+      <section>
+        <h2>Relational Schema Design</h2>
+        <p>In PostgreSQL and Prisma, we represent irregular status with an enum and an explicit credit ceiling on the <code>Student</code> model:</p>
+        <pre><code>enum StudentType {
+  REGULAR
+  IRREGULAR
+}
+
+model Student {
+  id                Int         @id @default(autoincrement())
+  student_number    String      @unique
+  student_type      StudentType @default(REGULAR)
+  max_allowed_units Int         @default(24)
+  // ... other attributes
+}</code></pre>
+      </section>
+
+      <section>
+        <h2>The Enrollment Validation Pipeline</h2>
+        <p>When an admin or advisor attempts <code>POST /api/v1/enrollments</code> with <code>{ student_id, course_offering_id }</code>, the backend executes three sequential checks:</p>
+        <ol>
+          <li><strong>Section Capacity Check:</strong> Verify active enrollments in target offering do not exceed <code>offering.capacity</code>.</li>
+          <li><strong>Duplicate Check:</strong> Verify student is not already enrolled in this offering (enforced by <code>@@unique([student_id, course_offering_id])</code>).</li>
+          <li><strong>Term Load Summation:</strong>
+            <pre><code>// 1. Fetch current enrolled units in the offering's term
+const activeEnrollments = await prisma.enrollment.findMany({
+  where: {
+    student_id: studentId,
+    courseOffering: { academic_term_id: targetTermId },
+    status: 'ENROLLED',
+  },
+  include: { courseOffering: { include: { course: true } } },
+});
+
+const currentUnits = activeEnrollments.reduce((sum, e) => sum + e.courseOffering.course.units, 0);
+const newTotal = currentUnits + targetCourse.units;
+
+if (newTotal > student.max_allowed_units) {
+  throw new BadRequestException(
+    `Enrollment exceeds maximum allowed units for this student (Attempted: ${newTotal}, Allowed: ${student.max_allowed_units}).`
+  );
+}</code></pre>
+          </li>
+        </ol>
+      </section>
+
+      <section class="quiz-container">
+        <h3>Knowledge Check</h3>
+        <p>A student on academic probation has <code>max_allowed_units = 12</code>. They currently have 3 courses enrolled (3 units each = 9 units total). An administrator attempts to enroll them in a 4-unit laboratory course in the same term. What should happen?</p>
+
+        <button class="quiz-option" onclick="checkAnswer(false, this)">HTTP 200: Allowed because total courses is under four</button>
+        <button class="quiz-option" onclick="checkAnswer(false, this)">HTTP 409: Conflict because course code has prerequisite</button>
+        <button class="quiz-option" onclick="checkAnswer(true, this)">HTTP 400: Rejected because total units reaches thirteen</button>
+        <button class="quiz-option" onclick="checkAnswer(false, this)">HTTP 422: Unprocessable because student is probationary</button>
+
+        <div id="quiz-feedback" class="quiz-feedback"></div>
+      </section>
+
+      <section>
+        <h2>Recommended Primary Source</h2>
+        <p>Read Martin Fowler's pattern on <a href="https://martinfowler.com/eaaCatalog/transactionScript.html" target="_blank">Transaction Script &amp; Domain Validation</a> for structuring relational business rule checks.</p>
+      </section>
+
+      <section class="card">
+        <strong>Have questions?</strong> Ask your AI pair programmer! You can ask: <em>"How do we optimize the term unit calculation query to prevent race conditions during high-volume enrollment periods?"</em>
+      </section>
+    </main>
+
+    <footer>
+      Student Information Management System &bull; Special Topics Coursework &bull; <a href="../reference/irregular-student-load-cheatsheet.html">Quick Reference Sheet</a>
+    </footer>
+  </div>
+
+  <script>
+    function checkAnswer(isCorrect, button) {
+      const feedback = document.getElementById('quiz-feedback');
+      feedback.style.display = 'block';
+      if (isCorrect) {
+        feedback.style.backgroundColor = '#dcfce7';
+        feedback.style.color = '#166534';
+        feedback.innerHTML = '<strong>Correct!</strong> 9 existing units + 4 candidate units = 13 units, which strictly violates the student\\'s 12-unit limit. The API returns HTTP 400 Bad Request with a clear message.';
+      } else {
+        feedback.style.backgroundColor = '#fee2e2';
+        feedback.style.color = '#991b1b';
+        feedback.innerHTML = '<strong>Not quite.</strong> Credit limits are enforced on cumulative units per term (9 + 4 = 13 > 12 allowed). The API rejects the request with HTTP 400 Bad Request.';
+      }
+    }
+  </script>
+</body>
+</html>
