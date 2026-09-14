@@ -78,20 +78,21 @@ describe('Academic Reference Data E2E Tests (Programs, Courses, Terms)', () => {
 
   describe('Programs', () => {
     let createdProgramId: number;
+    const testProgCode = 'PROG-' + Math.floor(Math.random() * 100000);
 
     it('should create a program as Admin (201)', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/v1/programs')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          code: 'BSIT-TEST',
+          code: testProgCode,
           name: 'BS Information Technology Test',
           description: 'Testing program creation',
         });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.code).toBe('BSIT-TEST');
+      expect(res.body.data.code).toBe(testProgCode);
       createdProgramId = res.body.data.id;
     });
 
@@ -100,7 +101,7 @@ describe('Academic Reference Data E2E Tests (Programs, Courses, Terms)', () => {
         .post('/api/v1/programs')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          code: 'BSIT-TEST',
+          code: testProgCode,
           name: 'Another BSIT',
         });
 
@@ -134,13 +135,14 @@ describe('Academic Reference Data E2E Tests (Programs, Courses, Terms)', () => {
 
   describe('Courses', () => {
     let createdCourseId: number;
+    const testCourseCode = 'IT-' + Math.floor(Math.random() * 100000);
 
     it('should create a course as Admin (201)', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/v1/courses')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          course_code: 'IT312-TEST',
+          course_code: testCourseCode,
           course_title: 'Web Systems 2 Test',
           description: 'Test course',
           units: 3,
@@ -148,7 +150,7 @@ describe('Academic Reference Data E2E Tests (Programs, Courses, Terms)', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.course_code).toBe('IT312-TEST');
+      expect(res.body.data.course_code).toBe(testCourseCode);
       createdCourseId = res.body.data.id;
     });
 
@@ -173,25 +175,32 @@ describe('Academic Reference Data E2E Tests (Programs, Courses, Terms)', () => {
         .set('Authorization', `Bearer ${studentToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.data.course_code).toBe('IT312-TEST');
+      expect(res.body.data.course_code).toBe(testCourseCode);
     });
   });
 
   describe('Academic Terms', () => {
+    const testYear = '2088-2089';
+
     it('should create an academic term as Admin (201)', async () => {
+      // Clean up if existing
+      await prisma.academicTerm.deleteMany({
+        where: { academic_year: testYear },
+      });
+
       const res = await request(app.getHttpServer())
         .post('/api/v1/academic-terms')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          academic_year: '2026-2027',
+          academic_year: testYear,
           semester: 'FIRST_SEMESTER',
-          start_date: '2026-08-15T00:00:00.000Z',
-          end_date: '2026-12-20T00:00:00.000Z',
+          start_date: '2088-08-15T00:00:00.000Z',
+          end_date: '2088-12-20T00:00:00.000Z',
         });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.academic_year).toBe('2026-2027');
+      expect(res.body.data.academic_year).toBe(testYear);
     });
 
     it('should reject duplicate term for same academic year and semester (409 Conflict)', async () => {
@@ -199,10 +208,10 @@ describe('Academic Reference Data E2E Tests (Programs, Courses, Terms)', () => {
         .post('/api/v1/academic-terms')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          academic_year: '2026-2027',
+          academic_year: testYear,
           semester: 'FIRST_SEMESTER',
-          start_date: '2026-08-15T00:00:00.000Z',
-          end_date: '2026-12-20T00:00:00.000Z',
+          start_date: '2088-08-15T00:00:00.000Z',
+          end_date: '2088-12-20T00:00:00.000Z',
         });
 
       expect(res.status).toBe(409);

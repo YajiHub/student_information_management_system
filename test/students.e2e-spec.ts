@@ -88,7 +88,16 @@ describe('Students Module E2E Tests (Activity 2)', () => {
     // Student 1 Profile
     const s1 = await prisma.student.upsert({
       where: { student_number: '2026-00001' },
-      update: { user_id: user1.id },
+      update: {
+        first_name: 'Juan',
+        last_name: 'Dela Cruz',
+        birth_date: new Date('2003-01-01'),
+        email: 'juan.delacruz@sims.edu',
+        program_id: programId,
+        user_id: user1.id,
+        year_level: 4,
+        student_type: 'REGULAR',
+      },
       create: {
         student_number: '2026-00001',
         first_name: 'Juan',
@@ -106,7 +115,16 @@ describe('Students Module E2E Tests (Activity 2)', () => {
     // Student 2 Profile
     const s2 = await prisma.student.upsert({
       where: { student_number: '2026-00002' },
-      update: { user_id: user2.id },
+      update: {
+        first_name: 'Maria',
+        last_name: 'Santos',
+        birth_date: new Date('2004-02-02'),
+        email: 'maria.santos@sims.edu',
+        program_id: programId,
+        user_id: user2.id,
+        year_level: 3,
+        student_type: 'IRREGULAR',
+      },
       create: {
         student_number: '2026-00002',
         first_name: 'Maria',
@@ -120,6 +138,11 @@ describe('Students Module E2E Tests (Activity 2)', () => {
       },
     });
     student2Id = s2.id;
+
+    // Clean up any test student 2099-00099 from previous runs
+    await prisma.student.deleteMany({
+      where: { student_number: '2099-00099' },
+    });
 
     // Get tokens
     const adminRes = await request(app.getHttpServer())
@@ -149,11 +172,11 @@ describe('Students Module E2E Tests (Activity 2)', () => {
       .post('/api/v1/students')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        student_number: '2026-00099',
+        student_number: '2099-00099',
         first_name: 'Pedro',
         last_name: 'Penduko',
         birth_date: '2004-05-15T00:00:00.000Z',
-        email: 'pedro.penduko@sims.edu',
+        email: 'pedro.penduko.unique@sims.edu',
         program_id: programId,
         year_level: 2,
         student_type: 'IRREGULAR',
@@ -162,7 +185,7 @@ describe('Students Module E2E Tests (Activity 2)', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.student_number).toBe('2026-00099');
+    expect(res.body.data.student_number).toBe('2099-00099');
     expect(res.body.data.student_type).toBe('IRREGULAR');
     expect(res.body.data.max_allowed_units).toBe(18);
   });

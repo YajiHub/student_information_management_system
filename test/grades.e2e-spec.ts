@@ -74,6 +74,12 @@ describe('Grades & Academic Record E2E Tests (Activity 2)', () => {
       },
     });
 
+    // Unlink this user_id from any other student records first
+    await prisma.student.updateMany({
+      where: { user_id: studentUser.id },
+      data: { user_id: null },
+    });
+
     const prog = await prisma.program.upsert({
       where: { code: 'BSCS' },
       update: {},
@@ -81,19 +87,24 @@ describe('Grades & Academic Record E2E Tests (Activity 2)', () => {
     });
 
     const student = await prisma.student.upsert({
-      where: { student_number: '2026-00050' },
+      where: { student_number: '2095-00050' },
       update: { user_id: studentUser.id },
       create: {
-        student_number: '2026-00050',
+        student_number: '2095-00050',
         first_name: 'Clara',
         last_name: 'Buenaventura',
         birth_date: new Date('2003-03-15'),
-        email: 'clara.buenaventura@sims.edu',
+        email: 'clara.buenaventura.grade@sims.edu',
         program_id: prog.id,
         user_id: studentUser.id,
       },
     });
     studentId = student.id;
+
+    // Clean up any existing enrollments for isolated student
+    await prisma.enrollment.deleteMany({
+      where: { student_id: student.id },
+    });
 
     // Course & Term
     const course = await prisma.course.upsert({
@@ -124,7 +135,7 @@ describe('Grades & Academic Record E2E Tests (Activity 2)', () => {
         course_id: course.id,
         academic_term_id: term.id,
         instructor_id: inst1.id,
-        section: 'CS-2A',
+        section: 'CS-' + Math.floor(Math.random() * 100000),
         schedule: 'TTH 09:00 - 10:30',
         room: 'Lab 1',
         capacity: 30,
@@ -228,7 +239,7 @@ describe('Grades & Academic Record E2E Tests (Activity 2)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.student.student_number).toBe('2026-00050');
+    expect(res.body.data.student.student_number).toBe('2095-00050');
     expect(res.body.data.summary.cumulative_gpa).toBe(1.25);
     expect(res.body.data.terms.length).toBeGreaterThan(0);
     expect(res.body.data.terms[0].term_gwa).toBe(1.25);

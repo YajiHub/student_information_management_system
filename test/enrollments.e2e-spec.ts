@@ -126,7 +126,7 @@ describe('Enrollments & Offerings E2E Tests (Activity 2)', () => {
     // Setup Student 2 (irregular underload on probation, only 3 units allowed cap)
     const s2 = await prisma.student.upsert({
       where: { student_number: '2026-00011' },
-      update: {},
+      update: { student_type: 'IRREGULAR', max_allowed_units: 3 },
       create: {
         student_number: '2026-00011',
         first_name: 'Andres',
@@ -139,6 +139,11 @@ describe('Enrollments & Offerings E2E Tests (Activity 2)', () => {
       },
     });
     lowUnitStudentId = s2.id;
+
+    // Remove any existing enrollments for s1 and s2 to keep test clean
+    await prisma.enrollment.deleteMany({
+      where: { student_id: { in: [s1.id, s2.id] } },
+    });
 
     // Login Admin
     const loginRes = await request(app.getHttpServer())
@@ -256,15 +261,16 @@ describe('Enrollments & Offerings E2E Tests (Activity 2)', () => {
     expect(enrollCS.status).toBe(201);
 
     // Create another course to test unit overflow
+    const randCode = 'EXT-' + Math.floor(Math.random() * 100000);
     const extraCourse = await prisma.course.create({
-      data: { course_code: 'EXTRA101', course_title: 'Extra Course', units: 3 },
+      data: { course_code: randCode, course_title: 'Extra Course', units: 3 },
     });
     const extraOffering = await prisma.courseOffering.create({
       data: {
         course_id: extraCourse.id,
         academic_term_id: termId,
         instructor_id: instructorId,
-        section: 'EXTRA-1',
+        section: 'EXTRA-' + Math.floor(Math.random() * 100000),
         schedule: 'Sat 08:00 - 11:00',
         room: 'Room 501',
       },
