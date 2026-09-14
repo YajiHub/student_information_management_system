@@ -9,6 +9,7 @@ import { AcademicTermsModule } from './academic-terms/academic-terms.module';
 import { StudentsModule } from './students/students.module';
 import { CourseOfferingsModule } from './course-offerings/course-offerings.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
+import { GradesModule } from './grades/grades.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -28,6 +29,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     StudentsModule,
     CourseOfferingsModule,
     EnrollmentsModule,
+    GradesModule,
   ],
   providers: [
     {
