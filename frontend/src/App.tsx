@@ -1,21 +1,106 @@
-export default function App() {
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/layout/ProtectedRoute';
+import { AppLayout } from './components/layout/AppLayout';
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { ForbiddenPage } from './pages/ForbiddenPage';
+import {
+  StudentsPage,
+  CoursesPage,
+  TermsPage,
+  OfferingsPage,
+  EnrollmentsPage,
+  GradesPage,
+  RecordsPage,
+} from './pages/Placeholders';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 30000,
+    },
+  },
+});
+
+export const App: React.FC = () => {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl text-center">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 mb-5 font-extrabold text-2xl">
-          S
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
-          SIMS Frontend Client
-        </h1>
-        <p className="text-sm text-slate-400 mb-6">
-          Special Topics Laboratory Activity III &bull; React 19 + Tailwind v4 + NestJS REST API
-        </p>
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          Ready for Module Integration
-        </div>
-      </div>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/forbidden" element={<ForbiddenPage />} />
+
+            {/* Protected Application Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+
+                {/* Admin Only */}
+                <Route
+                  path="students"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                      <StudentsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="academic/terms"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                      <TermsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Admin and Instructor */}
+                <Route
+                  path="academic/courses"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN', 'INSTRUCTOR']}>
+                      <CoursesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="grades"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN', 'INSTRUCTOR']}>
+                      <GradesPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Admin and Student */}
+                <Route
+                  path="enrollments"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN', 'STUDENT']}>
+                      <EnrollmentsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Shared: All Authorized Roles */}
+                <Route path="offerings" element={<OfferingsPage />} />
+                <Route path="records" element={<RecordsPage />} />
+              </Route>
+            </Route>
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
-}
+};
+
+export default App;
