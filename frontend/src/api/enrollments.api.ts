@@ -30,6 +30,15 @@ export const enrollmentsApi = {
     return res.data;
   },
 
+  getEnrollments: async (params?: {
+    student_id?: number;
+    course_offering_id?: number;
+    status?: string;
+  }): Promise<ApiResponse<Enrollment[]>> => {
+    const res = await apiClient.get<ApiResponse<Enrollment[]>>('/enrollments', { params });
+    return res.data;
+  },
+
   enroll: async (payload: {
     student_id: number;
     course_offering_id: number;

@@ -11,8 +11,8 @@ import { StudentsPage } from './pages/students/StudentsPage';
 import { CoursesPage } from './pages/academic/CoursesPage';
 import { TermsPage } from './pages/academic/TermsPage';
 import { OfferingsPage } from './pages/offerings/OfferingsPage';
+import { EnrollmentsPage } from './pages/enrollments/EnrollmentsPage';
 import {
-  EnrollmentsPage,
   GradesPage,
   RecordsPage,
 } from './pages/Placeholders';
