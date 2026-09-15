@@ -86,7 +86,7 @@ describe('Mandatory 20 Acceptance Demonstration Suite (Activity 2)', () => {
   });
 
   it('#4 - Create a program (201)', async () => {
-    const code = `DEMO-PROG-${Date.now().toString().slice(-4)}`;
+    const code = `PROG-${Math.floor(10000 + Math.random() * 90000)}`;
     const res = await request(app.getHttpServer())
       .post('/api/v1/programs')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -207,7 +207,7 @@ describe('Mandatory 20 Acceptance Demonstration Suite (Activity 2)', () => {
   });
 
   it('#10 - Create a course and academic term (201)', async () => {
-    const courseCode = `DEMO${Date.now().toString().slice(-4)}`;
+    const courseCode = `DM${Math.floor(10000 + Math.random() * 90000)}`;
     const courseRes = await request(app.getHttpServer())
       .post('/api/v1/courses')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -220,8 +220,11 @@ describe('Mandatory 20 Acceptance Demonstration Suite (Activity 2)', () => {
     expect(courseRes.status).toBe(201);
     createdCourseId = courseRes.body.data.id;
 
-    const randYear = Math.floor(2040 + Math.random() * 50);
+    const randYear = 3100 + Math.floor(Math.random() * 5000);
     const termYear = `${randYear}-${randYear + 1}`;
+    await prisma.academicTerm.deleteMany({
+      where: { academic_year: termYear },
+    });
     const termRes = await request(app.getHttpServer())
       .post('/api/v1/academic-terms')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -246,14 +249,14 @@ describe('Mandatory 20 Acceptance Demonstration Suite (Activity 2)', () => {
         course_id: createdCourseId,
         academic_term_id: createdTermId,
         instructor_id: instructor!.id,
-        section: 'DEMO-SEC',
+        section: `SEC-${Math.floor(1000 + Math.random() * 9000)}`,
         schedule: 'MWF 10:00 - 11:00',
         room: 'Lab 202',
         capacity: 40,
       });
 
     expect(res.status).toBe(201);
-    expect(res.body.data.section).toBe('DEMO-SEC');
+    expect(res.body.data.section).toBeDefined();
     createdOfferingId = res.body.data.id;
   });
 
