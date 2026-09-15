@@ -10,8 +10,8 @@ import { ForbiddenPage } from './pages/ForbiddenPage';
 import { StudentsPage } from './pages/students/StudentsPage';
 import { CoursesPage } from './pages/academic/CoursesPage';
 import { TermsPage } from './pages/academic/TermsPage';
+import { OfferingsPage } from './pages/offerings/OfferingsPage';
 import {
-  OfferingsPage,
   EnrollmentsPage,
   GradesPage,
   RecordsPage,
