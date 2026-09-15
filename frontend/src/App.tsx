@@ -12,10 +12,8 @@ import { CoursesPage } from './pages/academic/CoursesPage';
 import { TermsPage } from './pages/academic/TermsPage';
 import { OfferingsPage } from './pages/offerings/OfferingsPage';
 import { EnrollmentsPage } from './pages/enrollments/EnrollmentsPage';
-import {
-  GradesPage,
-  RecordsPage,
-} from './pages/Placeholders';
+import { GradesPage } from './pages/grades/GradesPage';
+import { RecordsPage } from './pages/records/RecordsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
