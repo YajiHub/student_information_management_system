@@ -7,8 +7,8 @@ import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ForbiddenPage } from './pages/ForbiddenPage';
+import { StudentsPage } from './pages/students/StudentsPage';
 import {
-  StudentsPage,
   CoursesPage,
   TermsPage,
   OfferingsPage,
