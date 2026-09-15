@@ -27,3 +27,17 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# agent skills
+.agents/
+skills-lock.json
+
+# Local teaching and study assets
+MISSION.md
+RESOURCES.md
+assets/
+lessons/
+learning-records/
+reference/
+guide.html
+
