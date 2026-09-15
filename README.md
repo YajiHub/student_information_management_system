@@ -1,13 +1,19 @@
-# Student Information Management System (SIMS) REST API
+# Student Information Management System (SIMS)
+## Laboratory Activities II & III (Special Topics in Software Development)
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![Tests](https://img.shields.io/badge/tests-61%20passing-brightgreen.svg)]()
+[![Backend Tests](https://img.shields.io/badge/backend%20tests-61%20passing-brightgreen.svg)]()
+[![Frontend Tests](https://img.shields.io/badge/frontend%20tests-30%20passing-brightgreen.svg)]()
 [![NestJS](https://img.shields.io/badge/NestJS-11.0.11-E0234E.svg?logo=nestjs)]()
+[![React](https://img.shields.io/badge/React-19.0.0-61DAFB.svg?logo=react)]()
+[![Vite](https://img.shields.io/badge/Vite-6.0.0-646CFF.svg?logo=vite)]()
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38B2AC.svg?logo=tailwind-css)]()
 [![Prisma](https://img.shields.io/badge/Prisma-6.4.1-2D3748.svg?logo=prisma)]()
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18.1-336791.svg?logo=postgresql)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6.svg?logo=typescript)]()
 
-An enterprise-grade RESTful API for a **Student Information Management System (SIMS)** built with **NestJS 11**, **TypeScript**, **Prisma ORM**, and **PostgreSQL 18**. Designed and developed for **Laboratory Activity 2 (Special Topics)** as the backend foundation for Laboratory Activity 3 (Frontend Framework).
+A complete full-stack enterprise **Student Information Management System (SIMS)** composed of:
+1. **Activity II:** Production-grade RESTful API built with **NestJS 11**, **TypeScript**, **Prisma ORM**, and **PostgreSQL 18** (served on `http://localhost:3000/api/v1`).
+2. **Activity III:** Independent, modern Single-Page Application (SPA) client built with **React 19**, **Vite 6**, **TypeScript 5**, **Tailwind CSS v4**, and **TanStack Query v5** (served on `http://localhost:5173`). See [frontend/README.md](frontend/README.md).
 
 ---
 
