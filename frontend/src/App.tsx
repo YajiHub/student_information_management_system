@@ -8,9 +8,9 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ForbiddenPage } from './pages/ForbiddenPage';
 import { StudentsPage } from './pages/students/StudentsPage';
+import { CoursesPage } from './pages/academic/CoursesPage';
+import { TermsPage } from './pages/academic/TermsPage';
 import {
-  CoursesPage,
-  TermsPage,
   OfferingsPage,
   EnrollmentsPage,
   GradesPage,
