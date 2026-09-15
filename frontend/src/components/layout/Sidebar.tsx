@@ -72,24 +72,44 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const role = user?.role || 'STUDENT';
 
   const visibleItems = NAV_ITEMS.filter((item) => item.allowedRoles.includes(role));
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen sticky top-0 shrink-0 select-none">
-      {/* Brand Header */}
-      <div className="h-16 px-6 border-b border-slate-800 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-md shadow-emerald-500/20 text-white shrink-0">
-          <GraduationCap size={20} />
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs md:hidden"
+        />
+      )}
+
+      <aside
+        className={`w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen fixed md:sticky top-0 z-40 shrink-0 select-none transition-transform duration-300 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
+        {/* Brand Header */}
+        <div className="h-16 px-6 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-md shadow-emerald-500/20 text-white shrink-0">
+              <GraduationCap size={20} />
+            </div>
+            <div className="overflow-hidden">
+              <div className="text-sm font-bold tracking-tight text-white truncate">Apex Institute</div>
+              <div className="text-[11px] font-mono text-emerald-400 truncate">SIMS v1.0 Client</div>
+            </div>
+          </div>
         </div>
-        <div className="overflow-hidden">
-          <div className="text-sm font-bold tracking-tight text-white truncate">Apex Institute</div>
-          <div className="text-[11px] font-mono text-emerald-400 truncate">SIMS v1.0 Client</div>
-        </div>
-      </div>
 
       {/* Navigation Menu */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -128,6 +148,7 @@ export const Sidebar: React.FC = () => {
           <span className="font-mono text-emerald-400">{role}</span>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };

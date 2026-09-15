@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogOut, User as UserIcon, Shield, Sparkles } from 'lucide-react';
+import { LogOut, User as UserIcon, Shield, Sparkles, Menu } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import type { Role } from '../../types/auth.types';
 
@@ -13,12 +13,21 @@ const roleBadgeStyles: Record<Role, string> = {
   STUDENT: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
 };
 
-export const Navbar: React.FC<NavbarProps> = () => {
+export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
 
   return (
     <header className="h-16 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-6 flex items-center justify-between sticky top-0 z-30">
       <div className="flex items-center gap-3">
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            aria-label="Toggle navigation menu"
+            className="md:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <Menu size={20} />
+          </button>
+        )}
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-xs font-mono uppercase tracking-wider text-slate-400 hidden sm:inline-block">
