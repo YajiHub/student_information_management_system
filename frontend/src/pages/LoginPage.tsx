@@ -160,38 +160,38 @@ export const LoginPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleQuickFill('admin@university.edu', 'AdminPass123!')}
+                onClick={() => handleQuickFill('admin@sims.edu', 'Password123!')}
                 className="text-left p-2.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 hover:border-slate-700 transition-all text-xs text-slate-300 hover:text-white cursor-pointer"
               >
                 <div className="font-semibold text-emerald-400">Admin</div>
-                <div className="text-[11px] text-slate-500 truncate">admin@university.edu</div>
+                <div className="text-[11px] text-slate-500 truncate">admin@sims.edu</div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleQuickFill('santos.j@university.edu', 'FacultyPass123!')}
+                onClick={() => handleQuickFill('prof.cruz@sims.edu', 'Password123!')}
                 className="text-left p-2.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 hover:border-slate-700 transition-all text-xs text-slate-300 hover:text-white cursor-pointer"
               >
                 <div className="font-semibold text-sky-400">Instructor</div>
-                <div className="text-[11px] text-slate-500 truncate">santos.j@...</div>
+                <div className="text-[11px] text-slate-500 truncate">prof.cruz@sims.edu</div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleQuickFill('2022-00001@student.edu', 'StudentPass123!')}
+                onClick={() => handleQuickFill('student1@sims.edu', 'Password123!')}
                 className="text-left p-2.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 hover:border-slate-700 transition-all text-xs text-slate-300 hover:text-white cursor-pointer"
               >
                 <div className="font-semibold text-purple-400">Student (Regular)</div>
-                <div className="text-[11px] text-slate-500 truncate">2022-00001@...</div>
+                <div className="text-[11px] text-slate-500 truncate">student1@sims.edu</div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleQuickFill('2021-00042@student.edu', 'StudentPass123!')}
+                onClick={() => handleQuickFill('student2@sims.edu', 'Password123!')}
                 className="text-left p-2.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 hover:border-slate-700 transition-all text-xs text-slate-300 hover:text-white cursor-pointer"
               >
                 <div className="font-semibold text-amber-400">Student (Irregular)</div>
-                <div className="text-[11px] text-slate-500 truncate">2021-00042@...</div>
+                <div className="text-[11px] text-slate-500 truncate">student2@sims.edu</div>
               </button>
             </div>
           </div>

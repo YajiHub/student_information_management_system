@@ -39,14 +39,14 @@ describe('LoginPage Component', () => {
   it('should populate fields when an Evaluator Quick-Fill button is clicked', () => {
     renderLoginPage();
 
-    const adminQuickFill = screen.getByRole('button', { name: /admin@university\.edu/i });
+    const adminQuickFill = screen.getByRole('button', { name: /admin@sims\.edu/i });
     fireEvent.click(adminQuickFill);
 
     const emailInput = screen.getByLabelText(/University Email/i) as HTMLInputElement;
     const passwordInput = screen.getByLabelText(/^Password$/i) as HTMLInputElement;
 
-    expect(emailInput.value).toBe('admin@university.edu');
-    expect(passwordInput.value).toBe('AdminPass123!');
+    expect(emailInput.value).toBe('admin@sims.edu');
+    expect(passwordInput.value).toBe('Password123!');
   });
 
   it('should call authApi.login and handle successful authentication', async () => {
