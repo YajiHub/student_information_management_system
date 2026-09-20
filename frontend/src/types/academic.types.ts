@@ -84,28 +84,40 @@ export interface Grade {
 }
 
 export interface TermCourseRecord {
+  enrollment_id?: number;
   course_code: string;
   course_title: string;
   units: number;
   section: string;
-  midterm_grade: number | null;
-  final_grade: number | null;
-  numerical_grade: number | null;
-  remarks: GradeRemarks | null;
+  status?: string;
+  schedule?: string;
+  room?: string;
+  midterm_grade: number | string | null;
+  final_grade: number | string | null;
+  numerical_grade?: number | string | null;
+  remarks: GradeRemarks | string | null;
 }
 
 export interface TermRecord {
-  academic_term_id: number;
-  academic_year: string;
-  semester: Semester;
-  term_units: number;
+  academic_term?: {
+    id: number;
+    academic_year: string;
+    semester: Semester;
+  };
+  academic_term_id?: number;
+  academic_year?: string;
+  semester?: Semester;
+  total_units?: number;
+  term_units?: number;
   term_gwa: number | null;
   courses: TermCourseRecord[];
 }
 
 export interface AcademicRecordSummary {
-  total_units_enrolled: number;
-  total_units_passed: number;
+  total_enrolled_courses?: number;
+  total_credited_units?: number;
+  total_units_enrolled?: number;
+  total_units_passed?: number;
   cumulative_gpa: number | null;
 }
 
@@ -115,8 +127,10 @@ export interface AcademicRecord {
     student_number: string;
     full_name: string;
     program: string;
+    program_code?: string;
     year_level: number;
     student_type: string;
+    status?: string;
   };
   summary: AcademicRecordSummary;
   terms: TermRecord[];

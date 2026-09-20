@@ -189,9 +189,9 @@ export const RecordsPage: React.FC = () => {
               No completed academic terms or recorded grades found for this student.
             </div>
           ) : (
-            record.terms.map((term) => (
+            record.terms.map((term, termIdx) => (
               <div
-                key={term.academic_term_id}
+                key={term.academic_term?.id || term.academic_term_id || termIdx}
                 className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm print:border-slate-300 print:bg-white"
               >
                 {/* Term Header */}
@@ -199,13 +199,14 @@ export const RecordsPage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-emerald-400" />
                     <span className="font-bold text-white text-sm print:text-black">
-                      {term.academic_year} &bull; {term.semester}
+                      {term.academic_term?.academic_year || term.academic_year || 'AY 2026-2027'} &bull;{' '}
+                      {term.academic_term?.semester || term.semester || 'FIRST_SEMESTER'}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-4 text-xs">
                     <span className="text-slate-400">
-                      Total Units: <strong className="text-slate-200 font-mono">{term.term_units}</strong>
+                      Total Units: <strong className="text-slate-200 font-mono">{term.total_units ?? term.term_units ?? 0}</strong>
                     </span>
                     <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 font-mono font-bold border border-emerald-500/30 print:text-black print:border-slate-400">
                       Term GWA: {term.term_gwa ? Number(term.term_gwa).toFixed(2) : '—'}
@@ -223,8 +224,7 @@ export const RecordsPage: React.FC = () => {
                         <th className="py-2.5 px-4 text-center">Units</th>
                         <th className="py-2.5 px-4">Section</th>
                         <th className="py-2.5 px-4 text-center">Midterm</th>
-                        <th className="py-2.5 px-4 text-center">Final</th>
-                        <th className="py-2.5 px-4 text-center">Numerical Grade</th>
+                        <th className="py-2.5 px-4 text-center">Final Grade</th>
                         <th className="py-2.5 px-4 text-center">Remarks</th>
                       </tr>
                     </thead>
@@ -238,15 +238,12 @@ export const RecordsPage: React.FC = () => {
                           <td className="py-3 px-4 text-center font-mono font-semibold">{c.units}</td>
                           <td className="py-3 px-4 font-mono text-slate-400">{c.section}</td>
                           <td className="py-3 px-4 text-center font-mono">
-                            {c.midterm_grade !== null ? Number(c.midterm_grade).toFixed(2) : '—'}
-                          </td>
-                          <td className="py-3 px-4 text-center font-mono">
-                            {c.final_grade !== null ? Number(c.final_grade).toFixed(2) : '—'}
+                            {c.midterm_grade ? Number(c.midterm_grade).toFixed(2) : '—'}
                           </td>
                           <td className="py-3 px-4 text-center font-mono font-bold">
-                            {c.numerical_grade !== null ? (
-                              <span className={c.numerical_grade <= 3.0 ? 'text-emerald-400' : 'text-rose-400'}>
-                                {Number(c.numerical_grade).toFixed(2)}
+                            {c.final_grade ? (
+                              <span className={Number(c.final_grade) <= 3.0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                {Number(c.final_grade).toFixed(2)}
                               </span>
                             ) : (
                               '—'
@@ -279,8 +276,8 @@ export const RecordsPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <Sparkles size={16} className="text-emerald-400" />
               <span>
-                Total Units Earned: <strong className="text-white font-mono">{record.summary?.total_units_passed ?? 0}</strong> /{' '}
-                {record.summary?.total_units_enrolled ?? 0} units
+                Total Credited Units: <strong className="text-white font-mono">{record.summary?.total_credited_units ?? record.summary?.total_units_passed ?? 0}</strong> &bull;{' '}
+                Total Enrolled Courses: <strong className="text-slate-200 font-mono">{record.summary?.total_enrolled_courses ?? record.terms.reduce((acc, t) => acc + t.courses.length, 0)}</strong>
               </span>
             </div>
             <div className="text-[11px] text-slate-500 font-mono">
