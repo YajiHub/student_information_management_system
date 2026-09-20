@@ -19,7 +19,7 @@ export const RecordsPage: React.FC = () => {
 
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
 
-  // Fetch all students if Admin / Instructor
+  // Fetch all students if Admin / Registrar / Instructor
   const { data: studentsResponse, isLoading: loadingStudents } = useQuery({
     queryKey: ['students', 'for-records'],
     queryFn: () => studentsApi.getAll({ per_page: 100 }),
@@ -27,17 +27,15 @@ export const RecordsPage: React.FC = () => {
   });
   const allStudents: Student[] = studentsResponse?.data || [];
 
-  // Active student ID
+  // Active student ID: authoritative from user profile if Student, or selected for staff
   const activeStudentId = useMemo<number | null>(() => {
-    if (isStudent && user) {
-      // Find matching student
-      const found = allStudents.find((s) => s.email.toLowerCase() === user.email.toLowerCase());
-      return found ? found.id : 1; // Default to student ID 1 in demo if match
+    if (isStudent) {
+      return user?.student?.id || null;
     }
     if (selectedStudentId) {
       return Number(selectedStudentId);
     }
-    return allStudents[0]?.id || 1;
+    return allStudents[0]?.id || null;
   }, [isStudent, user, selectedStudentId, allStudents]);
 
   // Fetch official academic record

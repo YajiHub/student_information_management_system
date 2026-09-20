@@ -36,16 +36,35 @@ describe('LoginPage Component', () => {
     expect(screen.getByRole('button', { name: /Sign In/i })).toBeInTheDocument();
   });
 
-  it('should populate fields when an Evaluator Quick-Fill button is clicked', () => {
+  it('should populate fields when Evaluator Quick-Fill buttons are clicked', () => {
     renderLoginPage();
-
-    const adminQuickFill = screen.getByRole('button', { name: /admin@sims\.edu/i });
-    fireEvent.click(adminQuickFill);
 
     const emailInput = screen.getByLabelText(/University Email/i) as HTMLInputElement;
     const passwordInput = screen.getByLabelText(/^Password$/i) as HTMLInputElement;
 
+    // 1. Admin
+    fireEvent.click(screen.getByRole('button', { name: /admin@sims\.edu/i }));
     expect(emailInput.value).toBe('admin@sims.edu');
+    expect(passwordInput.value).toBe('Password123!');
+
+    // 2. Registrar
+    fireEvent.click(screen.getByRole('button', { name: /registrar@sims\.edu/i }));
+    expect(emailInput.value).toBe('registrar@sims.edu');
+    expect(passwordInput.value).toBe('Password123!');
+
+    // 3. Instructor
+    fireEvent.click(screen.getByRole('button', { name: /prof\.cruz@sims\.edu/i }));
+    expect(emailInput.value).toBe('prof.cruz@sims.edu');
+    expect(passwordInput.value).toBe('Password123!');
+
+    // 4. Regular Student
+    fireEvent.click(screen.getByRole('button', { name: /student1@sims\.edu/i }));
+    expect(emailInput.value).toBe('student1@sims.edu');
+    expect(passwordInput.value).toBe('Password123!');
+
+    // 5. Irregular Student
+    fireEvent.click(screen.getByRole('button', { name: /student2@sims\.edu/i }));
+    expect(emailInput.value).toBe('student2@sims.edu');
     expect(passwordInput.value).toBe('Password123!');
   });
 

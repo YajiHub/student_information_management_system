@@ -40,11 +40,11 @@ export const App: React.FC = () => {
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<DashboardPage />} />
 
-                {/* Admin Only */}
+                {/* Admin and Registrar */}
                 <Route
                   path="students"
                   element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'REGISTRAR']}>
                       <StudentsPage />
                     </ProtectedRoute>
                   }
@@ -52,17 +52,17 @@ export const App: React.FC = () => {
                 <Route
                   path="academic/terms"
                   element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'REGISTRAR']}>
                       <TermsPage />
                     </ProtectedRoute>
                   }
                 />
 
-                {/* Admin and Instructor */}
+                {/* Academic Courses & Curriculum */}
                 <Route
                   path="academic/courses"
                   element={
-                    <ProtectedRoute allowedRoles={['ADMIN', 'INSTRUCTOR']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'REGISTRAR', 'INSTRUCTOR']}>
                       <CoursesPage />
                     </ProtectedRoute>
                   }
@@ -70,17 +70,17 @@ export const App: React.FC = () => {
                 <Route
                   path="grades"
                   element={
-                    <ProtectedRoute allowedRoles={['ADMIN', 'INSTRUCTOR']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'REGISTRAR', 'INSTRUCTOR']}>
                       <GradesPage />
                     </ProtectedRoute>
                   }
                 />
 
-                {/* Admin and Student */}
+                {/* Enrollment Desk */}
                 <Route
                   path="enrollments"
                   element={
-                    <ProtectedRoute allowedRoles={['ADMIN', 'STUDENT']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'REGISTRAR', 'STUDENT']}>
                       <EnrollmentsPage />
                     </ProtectedRoute>
                   }

@@ -169,6 +169,15 @@ export const LoginPage: React.FC = () => {
 
               <button
                 type="button"
+                onClick={() => handleQuickFill('registrar@sims.edu', 'Password123!')}
+                className="text-left p-2.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 hover:border-slate-700 transition-all text-xs text-slate-300 hover:text-white cursor-pointer"
+              >
+                <div className="font-semibold text-amber-400">Registrar</div>
+                <div className="text-[11px] text-slate-500 truncate">registrar@sims.edu</div>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => handleQuickFill('prof.cruz@sims.edu', 'Password123!')}
                 className="text-left p-2.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 hover:border-slate-700 transition-all text-xs text-slate-300 hover:text-white cursor-pointer"
               >

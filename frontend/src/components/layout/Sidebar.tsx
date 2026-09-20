@@ -26,49 +26,49 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Dashboard',
     to: '/dashboard',
     icon: LayoutDashboard,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'STUDENT'],
+    allowedRoles: ['ADMIN', 'REGISTRAR', 'INSTRUCTOR', 'STUDENT'],
   },
   {
     label: 'Students Directory',
     to: '/students',
     icon: Users,
-    allowedRoles: ['ADMIN'],
+    allowedRoles: ['ADMIN', 'REGISTRAR'],
   },
   {
     label: 'Programs & Courses',
     to: '/academic/courses',
     icon: BookOpen,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR'],
+    allowedRoles: ['ADMIN', 'REGISTRAR', 'INSTRUCTOR'],
   },
   {
     label: 'Academic Terms',
     to: '/academic/terms',
     icon: Calendar,
-    allowedRoles: ['ADMIN'],
+    allowedRoles: ['ADMIN', 'REGISTRAR'],
   },
   {
     label: 'Course Offerings',
     to: '/offerings',
     icon: Layers,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'STUDENT'],
+    allowedRoles: ['ADMIN', 'REGISTRAR', 'INSTRUCTOR', 'STUDENT'],
   },
   {
     label: 'Enrollment Console',
     to: '/enrollments',
     icon: ClipboardList,
-    allowedRoles: ['ADMIN', 'STUDENT'],
+    allowedRoles: ['ADMIN', 'REGISTRAR', 'STUDENT'],
   },
   {
     label: 'Grades Entry',
     to: '/grades',
     icon: CheckCircle2,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR'],
+    allowedRoles: ['ADMIN', 'REGISTRAR', 'INSTRUCTOR'],
   },
   {
     label: 'Academic Records',
     to: '/records',
     icon: FileSpreadsheet,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'STUDENT'],
+    allowedRoles: ['ADMIN', 'REGISTRAR', 'INSTRUCTOR', 'STUDENT'],
   },
 ];
 
@@ -141,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <div className="p-4 border-t border-slate-800 text-[11px] text-slate-500">
         <div className="flex items-center justify-between">
           <span>Backend Port</span>
-          <span className="font-mono text-slate-400">:3000</span>
+          <span className="font-mono text-slate-400">:8000</span>
         </div>
         <div className="flex items-center justify-between mt-1">
           <span>Role Scope</span>

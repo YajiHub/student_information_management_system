@@ -22,7 +22,7 @@ import type { ApiErrorResponse } from '../../types/api.types';
 
 export const EnrollmentsPage: React.FC = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const canManageAll = user?.role === 'ADMIN' || user?.role === 'REGISTRAR';
   const queryClient = useQueryClient();
 
   // State
@@ -40,24 +40,24 @@ export const EnrollmentsPage: React.FC = () => {
   const activeTerm = terms.find((t) => t.is_active) || terms[0];
   const currentTermId = selectedTermId ? Number(selectedTermId) : activeTerm?.id;
 
-  // Students Query (for Admin selection or resolving current student)
+  // Students Query (for Admin / Registrar selection)
   const { data: studentsResponse, isLoading: loadingStudents } = useQuery({
     queryKey: ['students', 'all-for-enrollment'],
     queryFn: () => studentsApi.getAll({ per_page: 100 }),
+    enabled: canManageAll,
   });
   const allStudents: Student[] = studentsResponse?.data || [];
 
-  // Determine active student
+  // Determine active student: authoritative from user.student if Student, or selected student for Admin/Registrar
   const activeStudent = useMemo<Student | null>(() => {
-    if (!isAdmin && user) {
-      // Find matching student by institutional email
-      return allStudents.find((s) => s.email.toLowerCase() === user.email.toLowerCase()) || allStudents[0] || null;
+    if (!canManageAll && user?.student) {
+      return user.student as Student;
     }
     if (selectedStudentId) {
       return allStudents.find((s) => s.id === Number(selectedStudentId)) || null;
     }
-    return allStudents[0] || null;
-  }, [isAdmin, user, selectedStudentId, allStudents]);
+    return allStudents[0] || (user?.student as Student) || null;
+  }, [canManageAll, user, selectedStudentId, allStudents]);
 
   // Fetch student's enrollments
   const { data: enrollmentsData, isLoading: loadingEnrollments } = useQuery({
@@ -168,8 +168,8 @@ export const EnrollmentsPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Admin Student Selector */}
-        {isAdmin && (
+        {/* Admin / Registrar Student Selector */}
+        {canManageAll && (
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <span className="text-xs text-slate-400 shrink-0">Selected Student:</span>
             <select

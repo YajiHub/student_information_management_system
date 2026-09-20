@@ -1,4 +1,26 @@
-export type Role = 'ADMIN' | 'INSTRUCTOR' | 'STUDENT';
+export type Role = 'ADMIN' | 'REGISTRAR' | 'INSTRUCTOR' | 'STUDENT';
+
+export interface StudentProfile {
+  id: number;
+  student_number: string;
+  first_name: string;
+  middle_name?: string | null;
+  last_name: string;
+  suffix?: string | null;
+  email: string;
+  contact_number?: string;
+  address?: string;
+  program_id: number;
+  year_level: number;
+  student_type: 'REGULAR' | 'IRREGULAR';
+  max_allowed_units: number;
+  status: 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'DROPPED';
+  program?: {
+    id: number;
+    code: string;
+    name: string;
+  };
+}
 
 export interface User {
   id: number;
@@ -6,6 +28,7 @@ export interface User {
   name: string;
   role: Role;
   status: 'ACTIVE' | 'INACTIVE';
+  student?: StudentProfile | null;
   created_at?: string;
   updated_at?: string;
 }

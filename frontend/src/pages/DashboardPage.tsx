@@ -22,17 +22,19 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const role = user?.role || 'STUDENT';
 
-  // Fetch summary data for Admin / Instructor
+  // Fetch summary data for Admin / Registrar
+  const canViewMetrics = role === 'ADMIN' || role === 'REGISTRAR';
+
   const { data: studentsData, isLoading: loadingStudents } = useQuery({
     queryKey: ['dashboard', 'students-count'],
     queryFn: () => studentsApi.getAll({ per_page: 1 }),
-    enabled: role === 'ADMIN',
+    enabled: canViewMetrics,
   });
 
   const { data: irregularData } = useQuery({
     queryKey: ['dashboard', 'irregular-count'],
     queryFn: () => studentsApi.getAll({ student_type: 'IRREGULAR', per_page: 1 }),
-    enabled: role === 'ADMIN',
+    enabled: canViewMetrics,
   });
 
   const { data: termsData, isLoading: loadingTerms } = useQuery({
@@ -45,11 +47,32 @@ export const DashboardPage: React.FC = () => {
     queryFn: () => enrollmentsApi.getOfferings(),
   });
 
+  // Student-specific real academic record query
+  const studentProfile = user?.student;
+  const studentId = studentProfile?.id;
+
+  const { data: recordData } = useQuery({
+    queryKey: ['dashboard', 'student-record', studentId],
+    queryFn: () => (studentId ? studentsApi.getAcademicRecord(studentId) : null),
+    enabled: role === 'STUDENT' && !!studentId,
+  });
+  const studentRecord = recordData?.data;
+
   const activeTerm = termsData?.data?.find((t) => t.is_active) || termsData?.data?.[0];
   const totalStudents = studentsData?.meta?.total_records ?? 0;
   const irregularCount = irregularData?.meta?.total_records ?? 0;
   const regularCount = Math.max(0, totalStudents - irregularCount);
   const totalOfferings = offeringsData?.data?.length ?? 0;
+
+  // Student metrics
+  const isIrregular = studentProfile?.student_type === 'IRREGULAR';
+  const maxAllowedUnits = studentProfile?.max_allowed_units || (isIrregular ? 18 : 24);
+  const latestTerm = studentRecord?.terms?.[studentRecord.terms.length - 1];
+  const currentEnrolledUnits = latestTerm?.term_units || 0;
+  const loadPercentage = Math.min(100, Math.round((currentEnrolledUnits / maxAllowedUnits) * 100));
+  const studentGpa = studentRecord?.summary?.cumulative_gpa != null
+    ? Number(studentRecord.summary.cumulative_gpa).toFixed(2)
+    : '—';
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -81,8 +104,8 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Admin / Instructor Metric Cards */}
-      {(role === 'ADMIN' || role === 'INSTRUCTOR') && (
+      {/* Admin / Registrar / Instructor Metric Cards */}
+      {(role === 'ADMIN' || role === 'REGISTRAR' || role === 'INSTRUCTOR') && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Card 1: Total Students */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all shadow-sm">
@@ -167,13 +190,19 @@ export const DashboardPage: React.FC = () => {
           <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-white">Academic Load & Enrollment Standing</h3>
+                <h3 className="text-lg font-bold text-white">Academic Load &amp; Enrollment Standing</h3>
                 <p className="text-xs text-slate-400">
-                  Unit capacity governed by student classification
+                  Unit capacity governed by student classification ({studentProfile?.student_number || 'Enrolled Student'})
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                REGULAR LOAD (Max 23 Units)
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                  isIrregular
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                }`}
+              >
+                {studentType} LOAD (Max {maxAllowedUnits} Units)
               </span>
             </div>
 
@@ -181,16 +210,24 @@ export const DashboardPage: React.FC = () => {
             <div className="space-y-3 mt-6">
               <div className="flex justify-between text-xs text-slate-300">
                 <span className="font-semibold">Current Enrolled Load</span>
-                <span className="font-mono text-emerald-400">18 / 23 units (78%)</span>
+                <span className={`font-mono font-bold ${isIrregular ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  {currentEnrolledUnits} / {maxAllowedUnits} units ({loadPercentage}%)
+                </span>
               </div>
               <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
-                  style={{ width: '78%' }}
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    isIrregular
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400'
+                      : 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                  }`}
+                  style={{ width: `${loadPercentage}%` }}
                 />
               </div>
               <p className="text-[11px] text-slate-500">
-                * Note: Irregular students are strictly capped at 15 units max. System rejects enrollment requests exceeding prescribed maximum.
+                {isIrregular
+                  ? `* Irregular student enrollment standing: strict institutional cap at ${maxAllowedUnits} units. System rejects enrollment requests exceeding prescribed maximum.`
+                  : `* Regular student enrollment standing: standard prescribed load capped at ${maxAllowedUnits} units.`}
               </p>
             </div>
           </div>
@@ -201,7 +238,7 @@ export const DashboardPage: React.FC = () => {
                 <Award size={18} className="text-amber-400" />
                 <span className="text-xs font-semibold uppercase tracking-wider">Academic Performance</span>
               </div>
-              <div className="text-3xl font-extrabold text-white mt-1">1.25</div>
+              <div className="text-3xl font-extrabold text-white mt-1 font-mono">{studentGpa}</div>
               <div className="text-xs text-emerald-400 font-medium mt-1">General Weighted Average (GWA)</div>
               <p className="text-xs text-slate-500 mt-2">
                 Calculated across completed enrolled courses using official formula: &sum;(Grade &times; Units) / &sum;Units.
@@ -227,7 +264,7 @@ export const DashboardPage: React.FC = () => {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {role === 'ADMIN' && (
+          {(role === 'ADMIN' || role === 'REGISTRAR') && (
             <>
               <button
                 onClick={() => navigate('/students')}
@@ -270,7 +307,7 @@ export const DashboardPage: React.FC = () => {
             <ArrowRight size={16} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
           </button>
 
-          {(role === 'ADMIN' || role === 'INSTRUCTOR') && (
+          {(role === 'ADMIN' || role === 'REGISTRAR' || role === 'INSTRUCTOR') && (
             <button
               onClick={() => navigate('/grades')}
               className="flex items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-emerald-500/40 hover:bg-slate-900 transition-all text-left group cursor-pointer"

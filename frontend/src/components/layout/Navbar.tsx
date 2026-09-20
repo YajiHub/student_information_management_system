@@ -9,6 +9,7 @@ interface NavbarProps {
 
 const roleBadgeStyles: Record<Role, string> = {
   ADMIN: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  REGISTRAR: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
   INSTRUCTOR: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
   STUDENT: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
 };
@@ -53,6 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
                 }`}
               >
                 {user.role === 'ADMIN' && <Shield size={12} />}
+                {user.role === 'REGISTRAR' && <Shield size={12} />}
                 {user.role === 'INSTRUCTOR' && <Sparkles size={12} />}
                 {user.role === 'STUDENT' && <UserIcon size={12} />}
                 {user.role}
