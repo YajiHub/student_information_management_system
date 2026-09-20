@@ -116,10 +116,12 @@ export class StudentsService {
       'year_level',
       'created_at',
     ];
-    const sortField = allowedSortFields.includes(query.sort || '')
-      ? query.sort!
+    const incomingSort = query.sort || query.sort_by;
+    const sortField = allowedSortFields.includes(incomingSort || '')
+      ? incomingSort!
       : 'student_number';
-    const sortOrder = (query.order || 'asc').toLowerCase() === 'desc' ? 'desc' : 'asc';
+    const incomingOrder = query.order || query.sort_order || 'asc';
+    const sortOrder = incomingOrder.toLowerCase() === 'desc' ? 'desc' : 'asc';
 
     const [totalRecords, students] = await Promise.all([
       this.prisma.student.count({ where }),

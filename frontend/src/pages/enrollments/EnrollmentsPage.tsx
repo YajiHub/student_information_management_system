@@ -17,6 +17,7 @@ import { referenceApi } from '../../api/reference.api';
 import type { Student } from '../../types/student.types';
 import type { CourseOffering, Enrollment } from '../../types/academic.types';
 import { LoadGauge } from './LoadGauge';
+import { StudentSelectCombobox } from '../../components/common/StudentSelectCombobox';
 import type { AxiosError } from 'axios';
 import type { ApiErrorResponse } from '../../types/api.types';
 
@@ -172,22 +173,14 @@ export const EnrollmentsPage: React.FC = () => {
         {canManageAll && (
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <span className="text-xs text-slate-400 shrink-0">Selected Student:</span>
-            <select
-              aria-label="Select Enrolling Student"
-              value={activeStudent?.id ? String(activeStudent.id) : ''}
-              onChange={(e) => setSelectedStudentId(e.target.value)}
-              className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-100 font-semibold focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 max-w-xs truncate"
-            >
-              {loadingStudents ? (
-                <option>Loading students...</option>
-              ) : (
-                allStudents.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.student_number} - {s.last_name}, {s.first_name} ({s.student_type})
-                  </option>
-                ))
-              )}
-            </select>
+            <StudentSelectCombobox
+              students={allStudents}
+              selectedId={activeStudent?.id}
+              onSelect={(id) => setSelectedStudentId(String(id))}
+              loading={loadingStudents}
+              placeholder="Search student by ID, name..."
+              ariaLabel="Select Enrolling Student"
+            />
           </div>
         )}
       </div>

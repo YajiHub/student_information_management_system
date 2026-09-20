@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { studentsApi } from '../../api/students.api';
+import { StudentSelectCombobox } from '../../components/common/StudentSelectCombobox';
 import type { Student } from '../../types/student.types';
 import type { AcademicRecord } from '../../types/academic.types';
 
@@ -72,22 +73,14 @@ export const RecordsPage: React.FC = () => {
 
         <div className="flex items-center gap-3">
           {!isStudent && (
-            <select
-              aria-label="Select Student for Transcript"
-              value={selectedStudentId || (activeStudentId ? String(activeStudentId) : '')}
-              onChange={(e) => setSelectedStudentId(e.target.value)}
-              className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-100 font-semibold focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 max-w-xs truncate"
-            >
-              {loadingStudents ? (
-                <option>Loading student records...</option>
-              ) : (
-                allStudents.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.student_number} - {s.last_name}, {s.first_name} ({s.student_type})
-                  </option>
-                ))
-              )}
-            </select>
+            <StudentSelectCombobox
+              students={allStudents}
+              selectedId={selectedStudentId || (activeStudentId ? String(activeStudentId) : undefined)}
+              onSelect={(id) => setSelectedStudentId(String(id))}
+              loading={loadingStudents}
+              placeholder="Search student by ID, name..."
+              ariaLabel="Select Student for Transcript"
+            />
           )}
 
           <button

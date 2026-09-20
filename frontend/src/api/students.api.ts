@@ -5,7 +5,15 @@ import type { Grade, AcademicRecord } from '@/types/academic.types';
 
 export const studentsApi = {
   getAll: async (params?: StudentQueryParams): Promise<ApiResponse<Student[]>> => {
-    const res = await apiClient.get<ApiResponse<Student[]>>('/students', { params });
+    const cleanedParams: Record<string, any> = {};
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '' && !Number.isNaN(value)) {
+          cleanedParams[key] = value;
+        }
+      });
+    }
+    const res = await apiClient.get<ApiResponse<Student[]>>('/students', { params: cleanedParams });
     return res.data;
   },
 

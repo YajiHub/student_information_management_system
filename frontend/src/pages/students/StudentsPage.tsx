@@ -46,8 +46,8 @@ export const StudentsPage: React.FC = () => {
     const p: StudentQueryParams = {
       page,
       per_page: perPage,
-      sort_by: 'student_number',
-      sort_order: 'asc',
+      sort: 'student_number',
+      order: 'asc',
     };
     if (search.trim()) p.search = search.trim();
     if (selectedProgram) p.program_id = Number(selectedProgram);

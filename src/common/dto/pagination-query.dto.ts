@@ -28,10 +28,20 @@ export class PaginationQueryDto {
   @IsString()
   sort?: string;
 
+  @ApiPropertyOptional({ description: 'Sort field alias (compatibility)' })
+  @IsOptional()
+  @IsString()
+  sort_by?: string;
+
   @ApiPropertyOptional({ description: 'Sort direction', enum: ['asc', 'desc'], default: 'asc' })
   @IsOptional()
   @IsIn(['asc', 'desc', 'ASC', 'DESC'])
   order: 'asc' | 'desc' | 'ASC' | 'DESC' = 'asc';
+
+  @ApiPropertyOptional({ description: 'Sort direction alias (compatibility)' })
+  @IsOptional()
+  @IsIn(['asc', 'desc', 'ASC', 'DESC'])
+  sort_order?: 'asc' | 'desc' | 'ASC' | 'DESC';
 }
 
 export interface PaginationMeta {

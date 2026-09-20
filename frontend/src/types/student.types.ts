@@ -55,6 +55,8 @@ export interface StudentQueryParams {
   status?: StudentStatus | '';
   page?: number;
   per_page?: number;
+  sort?: string;
+  order?: 'asc' | 'desc';
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
 }
