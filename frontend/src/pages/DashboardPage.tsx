@@ -24,8 +24,8 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const role = user?.role || 'STUDENT';
 
-  // Fetch summary data for Admin / Registrar
-  const canViewMetrics = role === 'ADMIN' || role === 'REGISTRAR';
+  // Fetch summary data for Admin / Registrar / Instructor
+  const canViewMetrics = role === 'ADMIN' || role === 'REGISTRAR' || role === 'INSTRUCTOR';
 
   const { data: studentsData, isLoading: loadingStudents } = useQuery({
     queryKey: ['dashboard', 'students-count'],
@@ -65,6 +65,10 @@ export const DashboardPage: React.FC = () => {
   const irregularCount = irregularData?.meta?.total_records ?? 0;
   const regularCount = Math.max(0, totalStudents - irregularCount);
   const totalOfferings = offeringsData?.data?.length ?? 0;
+  const instructorEnrolledCount = (offeringsData?.data || []).reduce(
+    (sum: number, o: any) => sum + (o._count?.enrollments ?? 0),
+    0
+  );
 
   // Student metrics
   const studentType = studentProfile?.student_type || 'REGULAR';
@@ -122,12 +126,22 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="text-3xl font-bold text-white tracking-tight">
-              {loadingStudents ? '...' : totalStudents}
+              {loadingStudents || loadingOfferings ? '...' : (role === 'INSTRUCTOR' && instructorEnrolledCount > 0 ? instructorEnrolledCount : totalStudents)}
             </div>
             <div className="mt-2 text-xs text-slate-400 flex items-center gap-2">
-              <span className="text-emerald-400 font-medium">{regularCount} Regular</span>
-              <span>&bull;</span>
-              <span className="text-amber-400 font-medium">{irregularCount} Irregular</span>
+              {role === 'INSTRUCTOR' ? (
+                <>
+                  <span className="text-emerald-400 font-medium">{instructorEnrolledCount} in your classes</span>
+                  <span>&bull;</span>
+                  <span className="text-slate-400 font-medium">{totalStudents} campus</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-emerald-400 font-medium">{regularCount} Regular</span>
+                  <span>&bull;</span>
+                  <span className="text-amber-400 font-medium">{irregularCount} Irregular</span>
+                </>
+              )}
             </div>
           </div>
 
@@ -145,7 +159,7 @@ export const DashboardPage: React.FC = () => {
               {loadingOfferings ? '...' : totalOfferings}
             </div>
             <div className="mt-2 text-xs text-slate-400">
-              Active offerings across terms
+              {role === 'INSTRUCTOR' ? 'Assigned teaching sections' : 'Active offerings across terms'}
             </div>
           </div>
 
@@ -452,18 +466,35 @@ export const DashboardPage: React.FC = () => {
             </>
           )}
 
-          <button
-            onClick={() => navigate('/enrollments')}
-            className="flex items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-emerald-500/40 hover:bg-slate-900 transition-all text-left group cursor-pointer"
-          >
-            <div>
-              <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition-colors">
-                Enrollment Console
+          {(role === 'ADMIN' || role === 'REGISTRAR' || role === 'STUDENT') && (
+            <button
+              onClick={() => navigate('/enrollments')}
+              className="flex items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-emerald-500/40 hover:bg-slate-900 transition-all text-left group cursor-pointer"
+            >
+              <div>
+                <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                  Enrollment Console
+                </div>
+                <div className="text-[11px] text-slate-500">Enroll student with load validation</div>
               </div>
-              <div className="text-[11px] text-slate-500">Enroll student with load validation</div>
-            </div>
-            <ArrowRight size={16} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
-          </button>
+              <ArrowRight size={16} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
+            </button>
+          )}
+
+          {role === 'INSTRUCTOR' && (
+            <button
+              onClick={() => navigate('/offerings')}
+              className="flex items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-emerald-500/40 hover:bg-slate-900 transition-all text-left group cursor-pointer"
+            >
+              <div>
+                <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                  Assigned Sections
+                </div>
+                <div className="text-[11px] text-slate-500">View schedules, rooms &amp; capacities</div>
+              </div>
+              <ArrowRight size={16} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
+            </button>
+          )}
 
           {(role === 'ADMIN' || role === 'REGISTRAR' || role === 'INSTRUCTOR') && (
             <button

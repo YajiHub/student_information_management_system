@@ -78,9 +78,8 @@ describe('Sidebar Component Role-Based Navigation', () => {
 
     expect(screen.queryByText('Students Directory')).not.toBeInTheDocument();
     expect(screen.queryByText('Academic Terms')).not.toBeInTheDocument();
+    expect(screen.queryByText('Programs & Courses')).not.toBeInTheDocument();
     expect(screen.queryByText('Enrollment Console')).not.toBeInTheDocument();
-
-    expect(screen.getByText('Programs & Courses')).toBeInTheDocument();
     expect(screen.getByText('Course Offerings')).toBeInTheDocument();
     expect(screen.getByText('Grades Entry')).toBeInTheDocument();
     expect(screen.getByText('Academic Records')).toBeInTheDocument();

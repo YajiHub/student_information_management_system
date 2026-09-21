@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CheckCircle2,
@@ -7,6 +7,13 @@ import {
   MapPin,
   Save,
   Award,
+  Search,
+  Users,
+  Filter,
+  Layers,
+  GraduationCap,
+  TrendingUp,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { enrollmentsApi } from '../../api/enrollments.api';
@@ -15,12 +22,35 @@ import type { CourseOffering, Enrollment } from '../../types/academic.types';
 import type { AxiosError } from 'axios';
 import type { ApiErrorResponse } from '../../types/api.types';
 
+// Philippine standard discrete collegiate grading scale
+export const VALID_GRADE_VALUES = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 5.0];
+export const VALID_GRADE_OPTIONS = [
+  { value: '1.00', label: '1.00 (Excellent)' },
+  { value: '1.25', label: '1.25 (Superior)' },
+  { value: '1.50', label: '1.50 (Very Good)' },
+  { value: '1.75', label: '1.75 (Good)' },
+  { value: '2.00', label: '2.00 (Satisfactory)' },
+  { value: '2.25', label: '2.25 (Fair)' },
+  { value: '2.50', label: '2.50 (Average)' },
+  { value: '2.75', label: '2.75 (Below Average)' },
+  { value: '3.00', label: '3.00 (Passing)' },
+  { value: '5.00', label: '5.00 (Failed)' },
+];
+
+const STORAGE_KEY = 'sims_selected_grade_offering';
+
 export const GradesPage: React.FC = () => {
   const { user } = useAuth();
   const isInstructor = user?.role === 'INSTRUCTOR';
   const queryClient = useQueryClient();
 
-  const [selectedOfferingId, setSelectedOfferingId] = useState<string>('');
+  // Restore saved section from sessionStorage so navigating back retains context
+  const [selectedOfferingId, setSelectedOfferingId] = useState<string>(() => {
+    return sessionStorage.getItem(STORAGE_KEY) || '';
+  });
+
+  const [sectionSearch, setSectionSearch] = useState('');
+  const [onlyWithStudents, setOnlyWithStudents] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Row state for editable grades: enrollmentId -> { midterm, final }
@@ -38,9 +68,49 @@ export const GradesPage: React.FC = () => {
   });
   const offerings: CourseOffering[] = offeringsData?.data || [];
 
-  // Active offering
+  // Active offering: match stored ID or fallback to first
   const activeOffering =
-    offerings.find((o) => o.id === Number(selectedOfferingId)) || offerings[0] || null;
+    offerings.find((o) => String(o.id) === String(selectedOfferingId)) ||
+    offerings[0] ||
+    null;
+
+  // Keep sessionStorage in sync
+  useEffect(() => {
+    if (activeOffering && String(activeOffering.id) !== selectedOfferingId) {
+      setSelectedOfferingId(String(activeOffering.id));
+      sessionStorage.setItem(STORAGE_KEY, String(activeOffering.id));
+    }
+  }, [activeOffering, selectedOfferingId]);
+
+  const handleSelectOffering = (id: string | number) => {
+    const strId = String(id);
+    setSelectedOfferingId(strId);
+    sessionStorage.setItem(STORAGE_KEY, strId);
+  };
+
+  // Filtered offerings based on search bar & toggle
+  const filteredOfferings = useMemo(() => {
+    const q = sectionSearch.trim().toLowerCase();
+    return offerings.filter((o) => {
+      const studentCount = o._count?.enrollments ?? 0;
+      if (onlyWithStudents && studentCount === 0) return false;
+      if (!q) return true;
+
+      const code = o.course?.course_code?.toLowerCase() || '';
+      const title = o.course?.course_title?.toLowerCase() || '';
+      const section = o.section?.toLowerCase() || '';
+      const room = o.room?.toLowerCase() || '';
+      const schedule = o.schedule?.toLowerCase() || '';
+
+      return (
+        code.includes(q) ||
+        title.includes(q) ||
+        section.includes(q) ||
+        room.includes(q) ||
+        schedule.includes(q)
+      );
+    });
+  }, [offerings, sectionSearch, onlyWithStudents]);
 
   // Fetch enrollments for the active offering
   const { data: enrollmentsData, isLoading: loadingEnrollments } = useQuery({
@@ -50,6 +120,24 @@ export const GradesPage: React.FC = () => {
     enabled: !!activeOffering?.id,
   });
   const enrollments: Enrollment[] = enrollmentsData?.data || [];
+
+  // Section summary statistics
+  const gradedEnrollments = enrollments.filter(
+    (e) => e.grade?.numerical_grade !== null && e.grade?.numerical_grade !== undefined
+  );
+  const classGwa =
+    gradedEnrollments.length > 0
+      ? (
+          gradedEnrollments.reduce((sum, e) => sum + Number(e.grade!.numerical_grade), 0) /
+          gradedEnrollments.length
+        ).toFixed(2)
+      : '—';
+  const passedCount = enrollments.filter((e) => e.grade?.remarks === 'PASSED').length;
+  const failedCount = enrollments.filter((e) => e.grade?.remarks === 'FAILED').length;
+  const passingRate =
+    gradedEnrollments.length > 0
+      ? Math.round((passedCount / gradedEnrollments.length) * 100)
+      : null;
 
   // Mutations
   const saveGradeMutation = useMutation({
@@ -111,19 +199,30 @@ export const GradesPage: React.FC = () => {
     const midtermVal =
       input?.midterm !== undefined
         ? input.midterm === '' ? undefined : Number(input.midterm)
-        : e.grade?.midterm_grade ?? undefined;
+        : e.grade?.midterm_grade !== null && e.grade?.midterm_grade !== undefined
+        ? Number(e.grade.midterm_grade)
+        : undefined;
 
     const finalVal =
       input?.final !== undefined
         ? input.final === '' ? undefined : Number(input.final)
-        : e.grade?.final_grade ?? undefined;
+        : e.grade?.final_grade !== null && e.grade?.final_grade !== undefined
+        ? Number(e.grade.final_grade)
+        : undefined;
 
-    if (midtermVal !== undefined && (midtermVal < 1.0 || midtermVal > 5.0)) {
-      setFeedback({ type: 'error', text: 'Midterm grade must be between 1.00 and 5.00.' });
+    // Strict validation on official discrete collegiate scale
+    if (midtermVal !== undefined && !VALID_GRADE_VALUES.includes(midtermVal)) {
+      setFeedback({
+        type: 'error',
+        text: 'Midterm grade must be a valid standard collegiate mark (1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, or 5.00).',
+      });
       return;
     }
-    if (finalVal !== undefined && (finalVal < 1.0 || finalVal > 5.0)) {
-      setFeedback({ type: 'error', text: 'Final grade must be between 1.00 and 5.00.' });
+    if (finalVal !== undefined && !VALID_GRADE_VALUES.includes(finalVal)) {
+      setFeedback({
+        type: 'error',
+        text: 'Final grade must be a valid standard collegiate mark (1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, or 5.00).',
+      });
       return;
     }
 
@@ -144,23 +243,25 @@ export const GradesPage: React.FC = () => {
             <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
               Grading Portal
             </span>
+            <span className="text-xs text-slate-500">&bull;</span>
+            <span className="text-xs text-slate-400">Official Philippine Collegiate Scale</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <Award className="text-emerald-400" size={26} />
             Grades Entry &amp; Encoding
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Encode midterm and final marks on official 1.00 - 5.00 academic scale
+            Encode midterm and final marks on official discrete scale (1.00 - 5.00 in 0.25 increments; failing mark 5.00)
           </p>
         </div>
 
-        {/* Section Selector */}
+        {/* Section Dropdown Selector (Synchronized with Quick Access Cards) */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <span className="text-xs text-slate-400 shrink-0">Assigned Section:</span>
           <select
             aria-label="Select Course Section"
             value={activeOffering?.id ? String(activeOffering.id) : ''}
-            onChange={(e) => setSelectedOfferingId(e.target.value)}
+            onChange={(e) => handleSelectOffering(e.target.value)}
             className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-100 font-semibold focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
           >
             {loadingOfferings ? (
@@ -170,7 +271,7 @@ export const GradesPage: React.FC = () => {
             ) : (
               offerings.map((o) => (
                 <option key={o.id} value={o.id}>
-                  {o.section} &bull; {o.course?.course_code} - {o.course?.course_title}
+                  {o.section} &bull; {o.course?.course_code} - {o.course?.course_title} ({o._count?.enrollments ?? 0} students)
                 </option>
               ))
             )}
@@ -197,38 +298,175 @@ export const GradesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Active Section Info Card */}
-      {activeOffering && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 rounded-lg bg-slate-800 text-emerald-400 font-mono font-bold text-xs border border-slate-700">
-                {activeOffering.section}
-              </span>
-              <span className="text-xs text-slate-500">&bull;</span>
-              <span className="font-semibold text-white text-sm">
-                {activeOffering.course?.course_code} - {activeOffering.course?.course_title}
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 mt-2">
-              <div className="flex items-center gap-1">
-                <Clock size={13} className="text-slate-500" />
-                <span>{activeOffering.schedule}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <MapPin size={13} className="text-slate-500" />
-                <span>{activeOffering.room}</span>
-              </div>
-              <div>
-                Units: <span className="font-mono text-slate-200">{activeOffering.course?.units || 3}</span>
-              </div>
-            </div>
+      {/* Quick-Access Assigned Sections Panel */}
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Layers size={16} className="text-emerald-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-white">
+              Assigned Sections Quick-Access ({offerings.length})
+            </span>
           </div>
 
-          <div className="text-right text-xs">
-            <span className="text-slate-400">Class Size:</span>
-            <div className="font-mono text-base font-bold text-white">
-              {enrollments.length} / {activeOffering.capacity} Students
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search code, title, section, room..."
+                value={sectionSearch}
+                onChange={(e) => setSectionSearch(e.target.value)}
+                className="w-full pl-8 pr-7 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+              {sectionSearch && (
+                <button
+                  onClick={() => setSectionSearch('')}
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+
+            {/* Filter Toggle: Only with enrolled students */}
+            <button
+              onClick={() => setOnlyWithStudents((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
+                onlyWithStudents
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              <Filter size={12} />
+              <span>With Students Only</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Section Cards Strip / Grid */}
+        {loadingOfferings ? (
+          <div className="py-4 text-center text-xs text-slate-500">Loading assigned sections...</div>
+        ) : filteredOfferings.length === 0 ? (
+          <div className="py-6 text-center text-xs text-slate-500 bg-slate-950/40 rounded-xl border border-slate-800/60">
+            No course sections match &ldquo;{sectionSearch}&rdquo;.
+            {sectionSearch && (
+              <button
+                onClick={() => setSectionSearch('')}
+                className="ml-2 text-emerald-400 hover:underline cursor-pointer"
+              >
+                Clear filter
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto pr-1">
+            {filteredOfferings.map((o) => {
+              const isSelected = activeOffering?.id === o.id;
+              const count = o._count?.enrollments ?? 0;
+              return (
+                <button
+                  key={o.id}
+                  onClick={() => handleSelectOffering(o.id)}
+                  type="button"
+                  className={`p-3 rounded-xl text-left transition-all border cursor-pointer group ${
+                    isSelected
+                      ? 'bg-emerald-950/40 border-emerald-500/80 shadow-md ring-1 ring-emerald-500/40'
+                      : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold ${
+                          isSelected
+                            ? 'bg-emerald-500 text-slate-950'
+                            : 'bg-slate-800 text-slate-300 group-hover:text-emerald-400'
+                        }`}
+                      >
+                        {o.section}
+                      </span>
+                      <span className="font-mono font-bold text-xs text-white truncate">
+                        {o.course?.course_code}
+                      </span>
+                    </div>
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        count > 0
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-slate-800/50 text-slate-500 border-slate-800'
+                      }`}
+                    >
+                      {count} {count === 1 ? 'student' : 'students'}
+                    </span>
+                  </div>
+
+                  <div className="text-[11px] text-slate-300 font-medium truncate">
+                    {o.course?.course_title}
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500">
+                    <span className="truncate">{o.schedule || 'TBA'}</span>
+                    <span className="shrink-0 ml-1 font-mono">{o.room || 'TBA'}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Active Section Info Card & Class Statistics */}
+      {activeOffering && (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded-lg bg-slate-800 text-emerald-400 font-mono font-bold text-xs border border-slate-700">
+                  {activeOffering.section}
+                </span>
+                <span className="text-xs text-slate-500">&bull;</span>
+                <span className="font-semibold text-white text-sm">
+                  {activeOffering.course?.course_code} - {activeOffering.course?.course_title}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 mt-2">
+                <div className="flex items-center gap-1">
+                  <Clock size={13} className="text-slate-500" />
+                  <span>{activeOffering.schedule}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MapPin size={13} className="text-slate-500" />
+                  <span>{activeOffering.room}</span>
+                </div>
+                <div>
+                  Units: <span className="font-mono text-slate-200">{activeOffering.course?.units || 3}</span>
+                </div>
+                <div>
+                  Capacity: <span className="font-mono text-slate-200">{enrollments.length} / {activeOffering.capacity}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Section Analytics */}
+            <div className="flex items-center gap-3">
+              <div className="px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-center">
+                <span className="text-[10px] uppercase font-semibold text-slate-500 block">Class GWA</span>
+                <span className="text-base font-bold font-mono text-emerald-400">{classGwa}</span>
+              </div>
+              <div className="px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-center">
+                <span className="text-[10px] uppercase font-semibold text-slate-500 block">Graded</span>
+                <span className="text-base font-bold font-mono text-white">
+                  {gradedEnrollments.length}/{enrollments.length}
+                </span>
+              </div>
+              <div className="px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-center">
+                <span className="text-[10px] uppercase font-semibold text-slate-500 block">Passing Rate</span>
+                <span className="text-base font-bold font-mono text-emerald-400">
+                  {passingRate !== null ? `${passingRate}%` : '—'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -243,8 +481,8 @@ export const GradesPage: React.FC = () => {
                 <th className="py-3 px-4">Student Number</th>
                 <th className="py-3 px-4">Student Name</th>
                 <th className="py-3 px-4">Type</th>
-                <th className="py-3 px-4 text-center">Midterm (1.0 - 5.0)</th>
-                <th className="py-3 px-4 text-center">Final (1.0 - 5.0)</th>
+                <th className="py-3 px-4 text-center">Midterm (Scale 1.00 - 5.00)</th>
+                <th className="py-3 px-4 text-center">Final (Scale 1.00 - 5.00)</th>
                 <th className="py-3 px-4 text-center">Numerical Grade</th>
                 <th className="py-3 px-4 text-center">Remarks</th>
                 <th className="py-3 px-4 text-right">Action</th>
@@ -261,7 +499,13 @@ export const GradesPage: React.FC = () => {
               {!loadingEnrollments && enrollments.length === 0 && (
                 <tr>
                   <td colSpan={8} className="py-10 text-center text-slate-500">
-                    No enrolled students in this section.
+                    <div className="max-w-sm mx-auto text-center space-y-2">
+                      <Users size={28} className="mx-auto text-slate-600" />
+                      <div className="font-semibold text-slate-300">No enrolled students in this section</div>
+                      <p className="text-[11px] text-slate-500">
+                        Use the Quick-Access bar above to switch to another assigned section or check back once the Registrar has enrolled students.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -272,14 +516,14 @@ export const GradesPage: React.FC = () => {
                     gradeInputs[e.id]?.midterm !== undefined
                       ? gradeInputs[e.id].midterm
                       : e.grade?.midterm_grade !== null && e.grade?.midterm_grade !== undefined
-                      ? String(e.grade.midterm_grade)
+                      ? Number(e.grade.midterm_grade).toFixed(2)
                       : '';
 
                   const currentFinal =
                     gradeInputs[e.id]?.final !== undefined
                       ? gradeInputs[e.id].final
                       : e.grade?.final_grade !== null && e.grade?.final_grade !== undefined
-                      ? String(e.grade.final_grade)
+                      ? Number(e.grade.final_grade).toFixed(2)
                       : '';
 
                   const numerical = e.grade?.numerical_grade;
@@ -305,40 +549,44 @@ export const GradesPage: React.FC = () => {
                         </span>
                       </td>
 
-                      {/* Midterm Grade Input */}
+                      {/* Discrete Midterm Grade Select Picker */}
                       <td className="py-3 px-4 text-center">
-                        <input
-                          type="number"
-                          step="0.25"
-                          min="1.00"
-                          max="5.00"
+                        <select
                           aria-label={`Midterm grade for ${student?.first_name} ${student?.last_name}`}
-                          placeholder="—"
                           value={currentMidterm}
                           onChange={(ev) => handleInputChange(e.id, 'midterm', ev.target.value)}
-                          className="w-20 px-2 py-1 text-center bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                        />
+                          className="w-28 px-2 py-1.5 text-center bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 cursor-pointer"
+                        >
+                          <option value="">— Select —</option>
+                          {VALID_GRADE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.value}
+                            </option>
+                          ))}
+                        </select>
                       </td>
 
-                      {/* Final Grade Input */}
+                      {/* Discrete Final Grade Select Picker */}
                       <td className="py-3 px-4 text-center">
-                        <input
-                          type="number"
-                          step="0.25"
-                          min="1.00"
-                          max="5.00"
+                        <select
                           aria-label={`Final grade for ${student?.first_name} ${student?.last_name}`}
-                          placeholder="—"
                           value={currentFinal}
                           onChange={(ev) => handleInputChange(e.id, 'final', ev.target.value)}
-                          className="w-20 px-2 py-1 text-center bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-                        />
+                          className="w-28 px-2 py-1.5 text-center bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 cursor-pointer"
+                        >
+                          <option value="">— Select —</option>
+                          {VALID_GRADE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.value}
+                            </option>
+                          ))}
+                        </select>
                       </td>
 
                       {/* Computed Numerical Grade */}
                       <td className="py-3 px-4 text-center font-mono font-bold">
                         {numerical !== null && numerical !== undefined ? (
-                          <span className={numerical <= 3.0 ? 'text-emerald-400' : 'text-rose-400'}>
+                          <span className={Number(numerical) <= 3.0 ? 'text-emerald-400' : 'text-rose-400'}>
                             {Number(numerical).toFixed(2)}
                           </span>
                         ) : (

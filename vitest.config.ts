@@ -8,6 +8,7 @@ export default defineConfig({
     environment: 'node',
     root: './',
     include: ['**/*.spec.ts', '**/*.e2e-spec.ts'],
+    exclude: ['**/node_modules/**', 'frontend/**'],
     testTimeout: 30000,
     hookTimeout: 30000,
     fileParallelism: false,

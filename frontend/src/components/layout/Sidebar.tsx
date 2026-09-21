@@ -38,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Programs & Courses',
     to: '/academic/courses',
     icon: BookOpen,
-    allowedRoles: ['ADMIN', 'REGISTRAR', 'INSTRUCTOR'],
+    allowedRoles: ['ADMIN', 'REGISTRAR'],
   },
   {
     label: 'Academic Terms',

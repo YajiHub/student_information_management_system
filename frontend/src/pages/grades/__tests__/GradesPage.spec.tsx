@@ -127,7 +127,7 @@ describe('GradesPage Component', () => {
     await waitFor(() => {
       expect(screen.getByText('2022-00001')).toBeInTheDocument();
       expect(screen.getByText('John Doe')).toBeInTheDocument();
-      expect(screen.getByText('1.35')).toBeInTheDocument();
+      expect(screen.getAllByText('1.35').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('PASSED')).toBeInTheDocument();
     });
   });

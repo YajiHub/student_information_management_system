@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -9,6 +10,8 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export const VALID_GRADE_VALUES = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 5.0];
 
 export class EncodeGradeDto {
   @ApiProperty({ example: 1, description: 'Enrollment record ID' })
@@ -21,16 +24,18 @@ export class EncodeGradeDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 }, { message: 'midterm_grade must be a number with at most 2 decimal places' })
-  @Min(1.0, { message: 'midterm_grade cannot be less than 1.00' })
-  @Max(5.0, { message: 'midterm_grade cannot exceed 5.00' })
+  @IsIn(VALID_GRADE_VALUES, {
+    message: 'midterm_grade must be a valid academic mark (1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, 5.00)',
+  })
   midterm_grade?: number;
 
   @ApiPropertyOptional({ example: 1.5, description: 'Final grade rating (1.00 - 5.00 grading scale)' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 }, { message: 'final_grade must be a number with at most 2 decimal places' })
-  @Min(1.0, { message: 'final_grade cannot be less than 1.00' })
-  @Max(5.0, { message: 'final_grade cannot exceed 5.00' })
+  @IsIn(VALID_GRADE_VALUES, {
+    message: 'final_grade must be a valid academic mark (1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, 5.00)',
+  })
   final_grade?: number;
 
   @ApiPropertyOptional({ example: 'PASSED', description: 'Academic remarks (PASSED, FAILED, INCOMPLETE)' })
