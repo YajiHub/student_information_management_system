@@ -475,9 +475,11 @@ export const DashboardPage: React.FC = () => {
             >
               <div>
                 <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition-colors">
-                  Enrollment Console
+                  {role === 'STUDENT' ? 'My Schedule & Load' : 'Enrollment Console'}
                 </div>
-                <div className="text-[11px] text-slate-500">Enroll student with load validation</div>
+                <div className="text-[11px] text-slate-500">
+                  {role === 'STUDENT' ? 'View registered classes & unit load' : 'Enroll student with load validation'}
+                </div>
               </div>
               <ArrowRight size={16} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
             </button>

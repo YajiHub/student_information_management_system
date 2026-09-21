@@ -15,7 +15,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 export const CoursesPage: React.FC = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const canManageCatalog = user?.role === 'ADMIN' || user?.role === 'REGISTRAR';
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'PROGRAMS' | 'COURSES'>('COURSES');
@@ -124,7 +124,7 @@ export const CoursesPage: React.FC = () => {
           </p>
         </div>
 
-        {isAdmin && (
+        {canManageCatalog && (
           <div className="flex items-center gap-2">
             {activeTab === 'PROGRAMS' ? (
               <button

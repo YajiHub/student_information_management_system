@@ -157,7 +157,7 @@ export const EnrollmentsPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              Registration Desk
+              {canManageAll ? 'Registration Desk' : 'Student Schedule'}
             </span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
@@ -165,7 +165,9 @@ export const EnrollmentsPage: React.FC = () => {
             Enrollment Console
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Section registration, real-time irregular unit limit enforcement, and add/drop management
+            {canManageAll
+              ? 'Section registration, real-time irregular unit limit enforcement, and add/drop management'
+              : 'Official enrolled courses, unit load status, and class schedule for the active term'}
           </p>
         </div>
 
@@ -275,16 +277,20 @@ export const EnrollmentsPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => handleDrop(e)}
-                        disabled={dropMutation.isPending}
-                        title="Drop Course"
-                        aria-label={`Drop course ${e.courseOffering?.course?.course_code}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-rose-400 hover:text-white hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/40 text-xs transition-colors cursor-pointer"
-                      >
-                        <Trash2 size={13} />
-                        <span>Drop</span>
-                      </button>
+                      {canManageAll ? (
+                        <button
+                          onClick={() => handleDrop(e)}
+                          disabled={dropMutation.isPending}
+                          title="Drop Course"
+                          aria-label={`Drop course ${e.courseOffering?.course?.course_code}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-rose-400 hover:text-white hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/40 text-xs transition-colors cursor-pointer"
+                        >
+                          <Trash2 size={13} />
+                          <span>Drop</span>
+                        </button>
+                      ) : (
+                        <span className="text-[11px] font-mono text-slate-500">Official</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -301,7 +307,9 @@ export const EnrollmentsPage: React.FC = () => {
               Available Sections for Registration
             </h2>
             <p className="text-xs text-slate-400">
-              Enroll student into open sections. Exceeding max units ({activeStudent?.max_allowed_units || 23} max) is rejected.
+              {canManageAll
+                ? `Enroll student into open sections. Exceeding max units (${activeStudent?.max_allowed_units || 23} max) is rejected.`
+                : 'Browse open course sections for the active term. Course registrations and schedule adjustments are administered by the Registrar.'}
             </p>
           </div>
 
@@ -420,6 +428,10 @@ export const EnrollmentsPage: React.FC = () => {
                             className="inline-flex items-center px-3 py-1 rounded-lg bg-amber-500/10 text-amber-400 text-[11px] font-semibold border border-amber-500/20 cursor-not-allowed"
                           >
                             Exceeds Limit
+                          </span>
+                        ) : !canManageAll ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[11px] font-medium border border-slate-700 cursor-default">
+                            View Only
                           </span>
                         ) : (
                           <button

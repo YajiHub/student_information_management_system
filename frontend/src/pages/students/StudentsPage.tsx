@@ -14,10 +14,13 @@ import {
 } from 'lucide-react';
 import { studentsApi } from '../../api/students.api';
 import { referenceApi } from '../../api/reference.api';
+import { useAuth } from '../../hooks/useAuth';
 import type { Student, StudentQueryParams, CreateStudentDto, UpdateStudentDto, StudentType } from '../../types/student.types';
 import { StudentModal } from './StudentModal';
 
 export const StudentsPage: React.FC = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const queryClient = useQueryClient();
 
   // Search and Filter States
@@ -368,14 +371,16 @@ export const StudentsPage: React.FC = () => {
                         >
                           <Edit2 size={14} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(s)}
-                          title="Delete Student"
-                          aria-label={`Delete ${s.first_name} ${s.last_name}`}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDelete(s)}
+                            title="Delete Student"
+                            aria-label={`Delete ${s.first_name} ${s.last_name}`}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
