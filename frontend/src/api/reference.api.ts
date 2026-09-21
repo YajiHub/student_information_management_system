@@ -38,9 +38,23 @@ export const referenceApi = {
     semester: string;
     start_date: string;
     end_date: string;
-    is_active?: boolean;
+    status?: 'ACTIVE' | 'INACTIVE';
   }): Promise<ApiResponse<AcademicTerm>> => {
     const res = await apiClient.post<ApiResponse<AcademicTerm>>('/academic-terms', payload);
+    return res.data;
+  },
+
+  updateTerm: async (
+    id: number,
+    payload: {
+      academic_year?: string;
+      semester?: string;
+      start_date?: string;
+      end_date?: string;
+      status?: 'ACTIVE' | 'INACTIVE';
+    }
+  ): Promise<ApiResponse<AcademicTerm>> => {
+    const res = await apiClient.put<ApiResponse<AcademicTerm>>(`/academic-terms/${id}`, payload);
     return res.data;
   },
 };

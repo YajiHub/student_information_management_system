@@ -7,6 +7,9 @@ import {
   AlertCircle,
   X,
   Clock,
+  ToggleLeft,
+  ToggleRight,
+  Sparkles,
 } from 'lucide-react';
 import { referenceApi } from '../../api/reference.api';
 import type { AcademicTerm, Semester } from '../../types/academic.types';
@@ -14,7 +17,8 @@ import { useAuth } from '../../hooks/useAuth';
 
 export const TermsPage: React.FC = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  // Both Admin and Registrar manage academic terms according to the laboratory specification
+  const canManageTerms = user?.role === 'ADMIN' || user?.role === 'REGISTRAR';
   const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,7 +42,7 @@ export const TermsPage: React.FC = () => {
       semester: string;
       start_date: string;
       end_date: string;
-      is_active?: boolean;
+      status: 'ACTIVE' | 'INACTIVE';
     }) => referenceApi.createTerm(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reference', 'terms'] });
@@ -48,18 +52,65 @@ export const TermsPage: React.FC = () => {
       setTimeout(() => setFeedback(null), 4000);
     },
     onError: (err: any) => {
-      setFeedback({ type: 'error', text: err?.response?.data?.message || 'Failed to create academic term.' });
+      const msg =
+        err?.response?.data?.message ||
+        (Array.isArray(err?.response?.data?.errors)
+          ? err.response.data.errors.join(', ')
+          : 'Failed to create academic term.');
+      setFeedback({ type: 'error', text: msg });
+    },
+  });
+
+  const toggleTermStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: 'ACTIVE' | 'INACTIVE' }) =>
+      referenceApi.updateTerm(id, { status }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['reference', 'terms'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setFeedback({
+        type: 'success',
+        text: `Term status updated to ${variables.status === 'ACTIVE' ? 'ACTIVE' : 'CLOSED'}.`,
+      });
+      setTimeout(() => setFeedback(null), 4000);
+    },
+    onError: (err: any) => {
+      setFeedback({
+        type: 'error',
+        text: err?.response?.data?.message || 'Failed to update term status.',
+      });
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate Academic Year pattern YYYY-YYYY
+    const ayPattern = /^\d{4}-\d{4}$/;
+    if (!ayPattern.test(academicYear.trim())) {
+      setFeedback({
+        type: 'error',
+        text: 'Academic year must be in format YYYY-YYYY (e.g. 2026-2027).',
+      });
+      return;
+    }
+
+    // Validate Start Date is before End Date
+    if (new Date(startDate) >= new Date(endDate)) {
+      setFeedback({
+        type: 'error',
+        text: 'Term start date must be strictly before end date.',
+      });
+      return;
+    }
+
+    // Convert dates to proper ISO strings and send status ('ACTIVE' | 'INACTIVE')
+    // NOTE: Avoid sending unwhitelisted keys like `is_active` which trigger 422 error
     createTermMutation.mutate({
-      academic_year: academicYear,
+      academic_year: academicYear.trim(),
       semester,
-      start_date: startDate,
-      end_date: endDate,
-      is_active: isActive,
+      start_date: new Date(`${startDate}T00:00:00.000Z`).toISOString(),
+      end_date: new Date(`${endDate}T23:59:59.000Z`).toISOString(),
+      status: isActive ? 'ACTIVE' : 'INACTIVE',
     });
   };
 
@@ -72,6 +123,8 @@ export const TermsPage: React.FC = () => {
             <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
               Session Management
             </span>
+            <span className="text-xs text-slate-500">&bull;</span>
+            <span className="text-xs text-slate-400">Institutional Calendar</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <Calendar className="text-emerald-400" size={26} />
@@ -82,7 +135,7 @@ export const TermsPage: React.FC = () => {
           </p>
         </div>
 
-        {isAdmin && (
+        {canManageTerms && (
           <button
             onClick={() => setIsModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
@@ -97,7 +150,7 @@ export const TermsPage: React.FC = () => {
       {feedback && (
         <div
           role="status"
-          className={`p-3.5 rounded-xl text-xs flex items-center gap-2.5 ${
+          className={`p-3.5 rounded-xl text-xs flex items-center gap-2.5 animate-fade-in ${
             feedback.type === 'success'
               ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
               : 'bg-rose-500/10 border border-rose-500/20 text-rose-300'
@@ -117,67 +170,109 @@ export const TermsPage: React.FC = () => {
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="border-b border-slate-800 bg-slate-950/70 text-slate-400 uppercase tracking-wider font-semibold">
-              <th className="py-3 px-4">Academic Year</th>
-              <th className="py-3 px-4">Semester</th>
-              <th className="py-3 px-4">Term Window</th>
-              <th className="py-3 px-4 text-center">Active Status</th>
+              <th className="py-3.5 px-4">Academic Year</th>
+              <th className="py-3.5 px-4">Semester</th>
+              <th className="py-3.5 px-4">Term Window</th>
+              <th className="py-3.5 px-4 text-center">Status</th>
+              {canManageTerms && <th className="py-3.5 px-4 text-right">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 text-slate-300">
             {isLoading && (
               <tr>
-                <td colSpan={4} className="py-10 text-center text-slate-500">
+                <td colSpan={canManageTerms ? 5 : 4} className="py-10 text-center text-slate-500">
                   Loading academic terms...
                 </td>
               </tr>
             )}
             {!isLoading && terms.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-10 text-center text-slate-500">
+                <td colSpan={canManageTerms ? 5 : 4} className="py-10 text-center text-slate-500">
                   No academic terms configured in database.
                 </td>
               </tr>
             )}
             {!isLoading &&
-              terms.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-bold text-white">{t.academic_year}</td>
-                  <td className="py-3.5 px-4 font-semibold text-slate-200">{t.semester}</td>
-                  <td className="py-3.5 px-4 text-slate-400">
-                    <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                      <Clock size={13} className="text-slate-500" />
-                      <span>{t.start_date.split('T')[0]}</span>
-                      <span>&rarr;</span>
-                      <span>{t.end_date.split('T')[0]}</span>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    {t.is_active ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                        ACTIVE TERM
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium text-slate-500 bg-slate-800/60">
-                        Closed
-                      </span>
+              terms.map((t) => {
+                // Term is active if status is ACTIVE or is_active is true
+                const isTermActive = t.status === 'ACTIVE' || (t as any).is_active === true;
+                const startDateStr = t.start_date ? t.start_date.split('T')[0] : 'TBA';
+                const endDateStr = t.end_date ? t.end_date.split('T')[0] : 'TBA';
+
+                return (
+                  <tr key={t.id} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-white">{t.academic_year}</td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-200">{t.semester}</td>
+                    <td className="py-3.5 px-4 text-slate-400">
+                      <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                        <Clock size={13} className="text-slate-500" />
+                        <span>{startDateStr}</span>
+                        <span>&rarr;</span>
+                        <span>{endDateStr}</span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      {isTermActive ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                          ACTIVE TERM
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium text-slate-500 bg-slate-800/60 border border-slate-800">
+                          Closed / Inactive
+                        </span>
+                      )}
+                    </td>
+                    {canManageTerms && (
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleTermStatusMutation.mutate({
+                              id: t.id,
+                              status: isTermActive ? 'INACTIVE' : 'ACTIVE',
+                            })
+                          }
+                          disabled={toggleTermStatusMutation.isPending}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer disabled:opacity-50 ${
+                            isTermActive
+                              ? 'border-amber-500/30 text-amber-400 hover:bg-amber-500/10'
+                              : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
+                          }`}
+                        >
+                          {isTermActive ? (
+                            <>
+                              <ToggleLeft size={14} />
+                              <span>Deactivate</span>
+                            </>
+                          ) : (
+                            <>
+                              <ToggleRight size={14} />
+                              <span>Set Active</span>
+                            </>
+                          )}
+                        </button>
+                      </td>
                     )}
-                  </td>
-                </tr>
-              ))}
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>
 
-      {/* Modal */}
+      {/* Create Term Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fade-in space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <h2 className="text-base font-bold text-white">Create Academic Term</h2>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Sparkles size={16} className="text-emerald-400" />
+                Create Academic Term
+              </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -191,6 +286,7 @@ export const TermsPage: React.FC = () => {
                   id="academic_year"
                   type="text"
                   required
+                  placeholder="YYYY-YYYY"
                   value={academicYear}
                   onChange={(e) => setAcademicYear(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 font-mono focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
@@ -204,7 +300,7 @@ export const TermsPage: React.FC = () => {
                   id="semester"
                   value={semester}
                   onChange={(e) => setSemester(e.target.value as Semester)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 cursor-pointer"
                 >
                   <option value="FIRST_SEMESTER">FIRST_SEMESTER</option>
                   <option value="SECOND_SEMESTER">SECOND_SEMESTER</option>
@@ -222,7 +318,7 @@ export const TermsPage: React.FC = () => {
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 cursor-pointer"
                   />
                 </div>
                 <div>
@@ -235,7 +331,7 @@ export const TermsPage: React.FC = () => {
                     required
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 cursor-pointer"
                   />
                 </div>
               </div>
@@ -245,9 +341,9 @@ export const TermsPage: React.FC = () => {
                   id="is_active"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="rounded border-slate-700 text-emerald-500 focus:ring-emerald-500/40 bg-slate-950"
+                  className="rounded border-slate-700 text-emerald-500 focus:ring-emerald-500/40 bg-slate-950 cursor-pointer"
                 />
-                <label htmlFor="is_active" className="text-xs text-slate-300 font-medium">
+                <label htmlFor="is_active" className="text-xs text-slate-300 font-medium cursor-pointer">
                   Set as Active Operational Term
                 </label>
               </div>
@@ -255,14 +351,14 @@ export const TermsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createTermMutation.isPending}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 cursor-pointer disabled:opacity-50"
                 >
                   {createTermMutation.isPending ? 'Saving...' : 'Register Term'}
                 </button>

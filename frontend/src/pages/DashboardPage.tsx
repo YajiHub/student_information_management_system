@@ -60,7 +60,9 @@ export const DashboardPage: React.FC = () => {
   });
   const studentRecord = recordData?.data;
 
-  const activeTerm = termsData?.data?.find((t) => t.is_active) || termsData?.data?.[0];
+  const activeTerm =
+    termsData?.data?.find((t) => t.status === 'ACTIVE' || t.is_active) ||
+    termsData?.data?.[0];
   const totalStudents = studentsData?.meta?.total_records ?? 0;
   const irregularCount = irregularData?.meta?.total_records ?? 0;
   const regularCount = Math.max(0, totalStudents - irregularCount);
