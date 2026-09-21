@@ -1,5 +1,3 @@
-// Prisma Schema for Student Information Management System REST API
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,6 +5,142 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   Int              @id @default(autoincrement())
+  name                 String
+  email                String           @unique
+  password_hash        String
+  role                 Role
+  status               UserStatus       @default(ACTIVE)
+  created_at           DateTime         @default(now())
+  updated_at           DateTime         @updatedAt
+  instructor_offerings CourseOffering[] @relation("InstructorOfferings")
+  student              Student?
+
+  @@map("users")
+}
+
+model Program {
+  id          Int          @id @default(autoincrement())
+  code        String       @unique
+  name        String
+  description String?
+  status      RecordStatus @default(ACTIVE)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  students    Student[]
+
+  @@map("programs")
+}
+
+model Course {
+  id           Int              @id @default(autoincrement())
+  course_code  String           @unique
+  course_title String
+  description  String?
+  units        Int              @default(3)
+  status       RecordStatus     @default(ACTIVE)
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
+  offerings    CourseOffering[]
+
+  @@map("courses")
+}
+
+model AcademicTerm {
+  id            Int              @id @default(autoincrement())
+  academic_year String
+  semester      Semester
+  start_date    DateTime
+  end_date      DateTime
+  status        RecordStatus     @default(ACTIVE)
+  created_at    DateTime         @default(now())
+  updated_at    DateTime         @updatedAt
+  offerings     CourseOffering[]
+
+  @@unique([academic_year, semester])
+  @@map("academic_terms")
+}
+
+model CourseOffering {
+  id               Int          @id @default(autoincrement())
+  course_id        Int
+  academic_term_id Int
+  instructor_id    Int
+  section          String
+  schedule         String
+  room             String
+  capacity         Int          @default(40)
+  status           RecordStatus @default(ACTIVE)
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  academic_term    AcademicTerm @relation(fields: [academic_term_id], references: [id])
+  course           Course       @relation(fields: [course_id], references: [id])
+  instructor       User         @relation("InstructorOfferings", fields: [instructor_id], references: [id])
+  enrollments      Enrollment[]
+
+  @@map("course_offerings")
+}
+
+model Student {
+  id                Int           @id @default(autoincrement())
+  student_number    String        @unique
+  first_name        String
+  middle_name       String?
+  last_name         String
+  suffix            String?
+  birth_date        DateTime
+  email             String        @unique
+  contact_number    String?
+  address           String?
+  program_id        Int
+  user_id           Int?          @unique
+  year_level        Int           @default(1)
+  student_type      StudentType   @default(REGULAR)
+  max_allowed_units Int           @default(24)
+  status            StudentStatus @default(ACTIVE)
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+  enrollments       Enrollment[]
+  program           Program       @relation(fields: [program_id], references: [id])
+  user              User?         @relation(fields: [user_id], references: [id])
+
+  @@index([student_number])
+  @@index([last_name])
+  @@index([email])
+  @@index([student_type])
+  @@map("students")
+}
+
+model Enrollment {
+  id                 Int              @id @default(autoincrement())
+  student_id         Int
+  course_offering_id Int
+  enrollment_date    DateTime         @default(now())
+  status             EnrollmentStatus @default(ENROLLED)
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @updatedAt
+  course_offering    CourseOffering   @relation(fields: [course_offering_id], references: [id])
+  student            Student          @relation(fields: [student_id], references: [id])
+  grade              Grade?
+
+  @@unique([student_id, course_offering_id])
+  @@map("enrollments")
+}
+
+model Grade {
+  id            Int        @id @default(autoincrement())
+  enrollment_id Int        @unique
+  midterm_grade Decimal?   @db.Decimal(4, 2)
+  final_grade   Decimal?   @db.Decimal(4, 2)
+  remarks       String?
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  enrollment    Enrollment @relation(fields: [enrollment_id], references: [id], onDelete: Cascade)
+
+  @@map("grades")
 }
 
 enum Role {
@@ -48,148 +182,4 @@ enum EnrollmentStatus {
   ENROLLED
   DROPPED
   COMPLETED
-}
-
-model User {
-  id            Int         @id @default(autoincrement())
-  name          String
-  email         String      @unique
-  password_hash String
-  role          Role
-  status        UserStatus  @default(ACTIVE)
-  created_at    DateTime    @default(now())
-  updated_at    DateTime    @updatedAt
-
-  student              Student?
-  instructor_offerings CourseOffering[] @relation("InstructorOfferings")
-
-  @@map("users")
-}
-
-model Program {
-  id          Int          @id @default(autoincrement())
-  code        String       @unique
-  name        String
-  description String?
-  status      RecordStatus @default(ACTIVE)
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
-
-  students Student[]
-
-  @@map("programs")
-}
-
-model Course {
-  id           Int          @id @default(autoincrement())
-  course_code  String       @unique
-  course_title String
-  description  String?
-  units        Int          @default(3)
-  status       RecordStatus @default(ACTIVE)
-  created_at   DateTime     @default(now())
-  updated_at   DateTime     @updatedAt
-
-  offerings CourseOffering[]
-
-  @@map("courses")
-}
-
-model AcademicTerm {
-  id            Int          @id @default(autoincrement())
-  academic_year String
-  semester      Semester
-  start_date    DateTime
-  end_date      DateTime
-  status        RecordStatus @default(ACTIVE)
-  created_at    DateTime     @default(now())
-  updated_at    DateTime     @updatedAt
-
-  offerings CourseOffering[]
-
-  @@unique([academic_year, semester])
-  @@map("academic_terms")
-}
-
-model CourseOffering {
-  id               Int          @id @default(autoincrement())
-  course_id        Int
-  academic_term_id Int
-  instructor_id    Int
-  section          String
-  schedule         String
-  room             String
-  capacity         Int          @default(40)
-  status           RecordStatus @default(ACTIVE)
-  created_at       DateTime     @default(now())
-  updated_at       DateTime     @updatedAt
-
-  course        Course       @relation(fields: [course_id], references: [id], onDelete: Restrict)
-  academic_term AcademicTerm @relation(fields: [academic_term_id], references: [id], onDelete: Restrict)
-  instructor    User         @relation("InstructorOfferings", fields: [instructor_id], references: [id], onDelete: Restrict)
-  enrollments   Enrollment[]
-
-  @@map("course_offerings")
-}
-
-model Student {
-  id                 Int           @id @default(autoincrement())
-  student_number     String        @unique
-  first_name         String
-  middle_name        String?
-  last_name          String
-  suffix             String?
-  birth_date         DateTime
-  email              String        @unique
-  contact_number     String?
-  address            String?
-  program_id         Int
-  user_id            Int?          @unique
-  year_level         Int           @default(1)
-  student_type       StudentType   @default(REGULAR)
-  max_allowed_units  Int           @default(24)
-  status             StudentStatus @default(ACTIVE)
-  created_at         DateTime      @default(now())
-  updated_at         DateTime      @updatedAt
-
-  program     Program      @relation(fields: [program_id], references: [id], onDelete: Restrict)
-  user        User?        @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  enrollments Enrollment[]
-
-  @@index([student_number])
-  @@index([last_name])
-  @@index([email])
-  @@index([student_type])
-  @@map("students")
-}
-
-model Enrollment {
-  id                 Int              @id @default(autoincrement())
-  student_id         Int
-  course_offering_id Int
-  enrollment_date    DateTime         @default(now())
-  status             EnrollmentStatus @default(ENROLLED)
-  created_at         DateTime         @default(now())
-  updated_at         DateTime         @updatedAt
-
-  student         Student        @relation(fields: [student_id], references: [id], onDelete: Restrict)
-  course_offering CourseOffering @relation(fields: [course_offering_id], references: [id], onDelete: Restrict)
-  grade           Grade?
-
-  @@unique([student_id, course_offering_id])
-  @@map("enrollments")
-}
-
-model Grade {
-  id             Int       @id @default(autoincrement())
-  enrollment_id  Int       @unique
-  midterm_grade  Decimal?  @db.Decimal(4, 2)
-  final_grade    Decimal?  @db.Decimal(4, 2)
-  remarks        String?
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @updatedAt
-
-  enrollment Enrollment @relation(fields: [enrollment_id], references: [id], onDelete: Cascade)
-
-  @@map("grades")
 }

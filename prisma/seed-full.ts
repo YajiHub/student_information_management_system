@@ -1,10 +1,11 @@
 import { PrismaClient, Role, Semester, StudentStatus, StudentType } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding clean demo database for Student Information Management System...');
+  console.log('🌱 Seeding full database (100 students) for Student Information Management System...');
 
   // 1. Clean existing records in reverse dependency order
   await prisma.grade.deleteMany();
@@ -18,8 +19,8 @@ async function main() {
 
   const defaultPassword = await bcrypt.hash('Password123!', 10);
 
-  // 2. Create the 5 Exact Demo Evaluator Users
-  console.log('Creating demo users...');
+  // 2. Create Users
+  console.log('Creating users...');
   const usersData = [
     {
       name: 'System Administrator',
@@ -40,13 +41,19 @@ async function main() {
       role: Role.INSTRUCTOR,
     },
     {
-      name: 'Juan Dela Cruz',
+      name: 'Prof. Maria Reyes',
+      email: 'prof.reyes@sims.edu',
+      password_hash: defaultPassword,
+      role: Role.INSTRUCTOR,
+    },
+    {
+      name: 'Juan Dela Cruz (Student One)',
       email: 'student1@sims.edu',
       password_hash: defaultPassword,
       role: Role.STUDENT,
     },
     {
-      name: 'Maria Santos',
+      name: 'Maria Santos (Student Two)',
       email: 'student2@sims.edu',
       password_hash: defaultPassword,
       role: Role.STUDENT,
@@ -58,14 +65,13 @@ async function main() {
     const user = await prisma.user.create({ data: u });
     createdUsers.push(user);
   }
-  const adminUser = createdUsers[0];
-  const registrarUser = createdUsers[1];
-  const instructorUser = createdUsers[2];
-  const studentUser1 = createdUsers[3];
-  const studentUser2 = createdUsers[4];
+  const instructor1 = createdUsers[2];
+  const instructor2 = createdUsers[3];
+  const studentUser1 = createdUsers[4];
+  const studentUser2 = createdUsers[5];
 
   // 3. Create Programs
-  console.log('Creating degree programs...');
+  console.log('Creating programs...');
   const programsData = [
     {
       code: 'BSIT',
@@ -90,8 +96,8 @@ async function main() {
     createdPrograms.push(program);
   }
 
-  // 4. Create Core Courses
-  console.log('Creating course catalog...');
+  // 4. Create Courses
+  console.log('Creating courses...');
   const coursesData = [
     { course_code: 'IT111', course_title: 'Introduction to Computing', units: 3 },
     { course_code: 'IT112', course_title: 'Computer Programming 1', units: 3 },
@@ -146,43 +152,46 @@ async function main() {
 
   // 6. Create Course Offerings
   console.log('Creating course offerings...');
-  const sections = ['1A', '1B', '2A', '2B', '3A', '4A'];
+  const sections = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B'];
   const createdOfferings: any[] = [];
 
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 20; i++) {
     const course = createdCourses[i % createdCourses.length];
-    const term = createdTerms[i < 6 ? 0 : 1];
+    const term = createdTerms[i % createdTerms.length];
+    const instructor = i % 2 === 0 ? instructor1 : instructor2;
     const section = sections[i % sections.length];
 
     const offering = await prisma.courseOffering.create({
       data: {
         course_id: course.id,
         academic_term_id: term.id,
-        instructor_id: instructorUser.id,
+        instructor_id: instructor.id,
         section,
         schedule: i % 2 === 0 ? 'MW 09:00 - 10:30' : 'TTH 13:00 - 14:30',
-        room: `Lab Room ${101 + (i % 4)}`,
-        capacity: 40,
+        room: `Lab Room ${101 + (i % 5)}`,
+        capacity: 45,
       },
     });
     createdOfferings.push(offering);
   }
 
-  // 7. Create Demo Students (Student 1 & Student 2)
-  console.log('Creating demo student records synchronized with user logins...');
+  // 7. Create Students
+  console.log('Creating students (100 total: regular & irregular)...');
+  const createdStudents: any[] = [];
 
-  // Student 1: Regular Student (24 max units, BSIT Year 4)
+  // Seed primary demo regular student
   const student1 = await prisma.student.create({
     data: {
       student_number: '2026-00001',
       first_name: 'Juan',
       middle_name: 'Protacio',
       last_name: 'Dela Cruz',
+      suffix: 'Jr.',
       birth_date: new Date('2003-06-19'),
       email: 'student1@sims.edu',
       contact_number: '+639171234567',
       address: 'Manila, Philippines',
-      program_id: createdPrograms[0].id, // BSIT
+      program_id: createdPrograms[0].id,
       user_id: studentUser1.id,
       year_level: 4,
       student_type: StudentType.REGULAR,
@@ -190,8 +199,9 @@ async function main() {
       status: StudentStatus.ACTIVE,
     },
   });
+  createdStudents.push(student1);
 
-  // Student 2: Irregular Student (18 max units, BSIT Year 2)
+  // Seed secondary demo irregular student
   const student2 = await prisma.student.create({
     data: {
       student_number: '2026-00002',
@@ -202,7 +212,7 @@ async function main() {
       email: 'student2@sims.edu',
       contact_number: '+639181234567',
       address: 'Quezon City, Philippines',
-      program_id: createdPrograms[0].id, // BSIT
+      program_id: createdPrograms[0].id,
       user_id: studentUser2.id,
       year_level: 2,
       student_type: StudentType.IRREGULAR,
@@ -210,72 +220,114 @@ async function main() {
       status: StudentStatus.ACTIVE,
     },
   });
+  createdStudents.push(student2);
 
-  // 8. Create Enrollments and Grades
-  console.log('Creating demo enrollments and grades...');
+  // Seed remaining 98 students
+  for (let i = 3; i <= 100; i++) {
+    const studentNumber = `2026-${String(i).padStart(5, '0')}`;
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const email = `student.${studentNumber.toLowerCase().replace('-', '')}@sims.edu`;
+    const program = createdPrograms[i % createdPrograms.length];
+    const yearLevel = (i % 4) + 1;
+    const isIrregular = i > 80;
+    const maxUnits = isIrregular ? 18 : 24;
 
-  // Student 1 (Juan Dela Cruz) Enrollments:
-  // Offering 0: IT111 (Term 1) -> Grade 1.25
-  const enr1_1 = await prisma.enrollment.create({
-    data: { student_id: student1.id, course_offering_id: createdOfferings[0].id },
-  });
-  await prisma.grade.create({
-    data: { enrollment_id: enr1_1.id, midterm_grade: 1.25, final_grade: 1.25, remarks: 'PASSED' },
-  });
+    const student = await prisma.student.create({
+      data: {
+        student_number: studentNumber,
+        first_name: firstName,
+        middle_name: faker.person.middleName(),
+        last_name: lastName,
+        birth_date: faker.date.birthdate({ min: 18, max: 24, mode: 'age' }),
+        email,
+        contact_number: faker.phone.number({ style: 'international' }),
+        address: `${faker.location.streetAddress()}, ${faker.location.city()}`,
+        program_id: program.id,
+        year_level: yearLevel,
+        student_type: isIrregular ? StudentType.IRREGULAR : StudentType.REGULAR,
+        max_allowed_units: maxUnits,
+        status: StudentStatus.ACTIVE,
+      },
+    });
+    createdStudents.push(student);
+  }
 
-  // Offering 1: IT112 (Term 1) -> Grade 1.50
-  const enr1_2 = await prisma.enrollment.create({
-    data: { student_id: student1.id, course_offering_id: createdOfferings[1].id },
-  });
-  await prisma.grade.create({
-    data: { enrollment_id: enr1_2.id, midterm_grade: 1.50, final_grade: 1.50, remarks: 'PASSED' },
-  });
+  // 8. Create Enrollments
+  console.log('Creating enrollments...');
+  const createdEnrollments: any[] = [];
+  const enrolledPairs = new Set<string>();
 
-  // Offering 2: IT121 (Term 1) -> Active (no final grade yet, Midterm 1.25)
-  const enr1_3 = await prisma.enrollment.create({
-    data: { student_id: student1.id, course_offering_id: createdOfferings[2].id },
-  });
-  await prisma.grade.create({
-    data: { enrollment_id: enr1_3.id, midterm_grade: 1.25, final_grade: null, remarks: null },
-  });
+  for (let j = 0; j < 5; j++) {
+    const offering = createdOfferings[j];
+    const key = `${student1.id}_${offering.id}`;
+    enrolledPairs.add(key);
 
-  // Offering 3: IT122 (Term 1) -> Active
-  await prisma.enrollment.create({
-    data: { student_id: student1.id, course_offering_id: createdOfferings[3].id },
-  });
+    const enrollment = await prisma.enrollment.create({
+      data: {
+        student_id: student1.id,
+        course_offering_id: offering.id,
+      },
+    });
+    createdEnrollments.push(enrollment);
+  }
 
-  // Student 2 (Maria Santos - Irregular) Enrollments:
-  // Offering 0: IT111 (Term 1) -> Grade 1.75
-  const enr2_1 = await prisma.enrollment.create({
-    data: { student_id: student2.id, course_offering_id: createdOfferings[0].id },
-  });
-  await prisma.grade.create({
-    data: { enrollment_id: enr2_1.id, midterm_grade: 1.75, final_grade: 1.75, remarks: 'PASSED' },
-  });
+  for (let j = 0; j < 3; j++) {
+    const offering = createdOfferings[j + 5];
+    const key = `${student2.id}_${offering.id}`;
+    enrolledPairs.add(key);
 
-  // Offering 1: IT112 (Term 1) -> Active (Midterm 2.00)
-  const enr2_2 = await prisma.enrollment.create({
-    data: { student_id: student2.id, course_offering_id: createdOfferings[1].id },
-  });
-  await prisma.grade.create({
-    data: { enrollment_id: enr2_2.id, midterm_grade: 2.00, final_grade: null, remarks: null },
-  });
+    const enrollment = await prisma.enrollment.create({
+      data: {
+        student_id: student2.id,
+        course_offering_id: offering.id,
+      },
+    });
+    createdEnrollments.push(enrollment);
+  }
 
-  // Offering 4: IT211 (Term 1) -> Active
-  await prisma.enrollment.create({
-    data: { student_id: student2.id, course_offering_id: createdOfferings[4].id },
-  });
+  // Distribute remaining enrollments
+  let studentIdx = 2;
+  while (createdEnrollments.length < 200) {
+    const student = createdStudents[studentIdx % createdStudents.length];
+    const offeringIdx = Math.floor(Math.random() * createdOfferings.length);
+    const offering = createdOfferings[offeringIdx];
 
-  console.log('\n========================================');
-  console.log('✅ CLEAN DEMO SEEDING COMPLETE');
-  console.log('========================================');
-  console.log('Demo Test Accounts:');
-  console.log('  Admin:               admin@sims.edu     / Password123!');
-  console.log('  Registrar:           registrar@sims.edu / Password123!');
-  console.log('  Instructor:          prof.cruz@sims.edu / Password123!');
-  console.log('  Student (Regular):   student1@sims.edu  / Password123! (#2026-00001, Juan Dela Cruz)');
-  console.log('  Student (Irregular): student2@sims.edu  / Password123! (#2026-00002, Maria Santos)');
-  console.log('========================================\n');
+    const key = `${student.id}_${offering.id}`;
+    if (!enrolledPairs.has(key)) {
+      enrolledPairs.add(key);
+      const enrollment = await prisma.enrollment.create({
+        data: {
+          student_id: student.id,
+          course_offering_id: offering.id,
+        },
+      });
+      createdEnrollments.push(enrollment);
+    }
+    studentIdx++;
+  }
+
+  // 9. Create Grades
+  console.log('Creating grades...');
+  const gradeScale = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0];
+
+  for (let k = 0; k < 100; k++) {
+    const enrollment = createdEnrollments[k];
+    const finalGrade = gradeScale[k % gradeScale.length];
+    const midtermGrade = gradeScale[(k + 1) % gradeScale.length];
+    const remarks = finalGrade <= 3.0 ? 'PASSED' : 'FAILED';
+
+    await prisma.grade.create({
+      data: {
+        enrollment_id: enrollment.id,
+        midterm_grade: midtermGrade,
+        final_grade: finalGrade,
+        remarks,
+      },
+    });
+  }
+
+  console.log('✅ Full database seeding complete.');
 }
 
 main()
