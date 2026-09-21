@@ -18,6 +18,7 @@ interface OfferingModalProps {
   }) => Promise<void>;
   courses: Course[];
   terms: AcademicTerm[];
+  instructors?: { id: number; name: string; email: string }[];
 }
 
 export const OfferingModal: React.FC<OfferingModalProps> = ({
@@ -26,14 +27,16 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
   onSave,
   courses,
   terms,
+  instructors,
 }) => {
   const [courseId, setCourseId] = useState<number>(courses[0]?.id || 1);
   const [termId, setTermId] = useState<number>(terms.find((t) => t.is_active)?.id || terms[0]?.id || 1);
-  const [instructorId, setInstructorId] = useState<number>(2); // Default instructor ID
-  const [section, setSection] = useState('BSIT-3A');
-  const [schedule, setSchedule] = useState('MWF 09:00 - 10:30 AM');
+  const defaultInstId = instructors && instructors.length > 0 ? instructors[0].id : 3;
+  const [instructorId, setInstructorId] = useState<number>(defaultInstId);
+  const [section, setSection] = useState('1A');
+  const [schedule, setSchedule] = useState('MW 09:00 - 10:30 AM');
   const [room, setRoom] = useState('Lab 302');
-  const [capacity, setCapacity] = useState<number>(30);
+  const [capacity, setCapacity] = useState<number>(40);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -75,11 +78,11 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
           <div>
             <h2 className="text-base font-bold text-white">Create Section Offering</h2>
-            <p className="text-xs text-slate-400">Add a course offering with section capacity and schedule</p>
+            <p className="text-xs text-slate-400">Add a course offering with section capacity, schedule, and instructor</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -101,7 +104,7 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
               id="course_id"
               value={courseId}
               onChange={(e) => setCourseId(Number(e.target.value))}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 cursor-pointer"
             >
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -120,7 +123,7 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
                 id="academic_term_id"
                 value={termId}
                 onChange={(e) => setTermId(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 cursor-pointer"
               >
                 {terms.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -131,6 +134,30 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
             </div>
 
             <div>
+              <label htmlFor="instructor_id" className="block text-xs font-semibold text-slate-300 mb-1">
+                Assigned Instructor <span className="text-rose-400">*</span>
+              </label>
+              <select
+                id="instructor_id"
+                value={instructorId}
+                onChange={(e) => setInstructorId(Number(e.target.value))}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 cursor-pointer"
+              >
+                {instructors && instructors.length > 0 ? (
+                  instructors.map((inst) => (
+                    <option key={inst.id} value={inst.id}>
+                      {inst.name} ({inst.email})
+                    </option>
+                  ))
+                ) : (
+                  <option value={3}>Prof. Juan Cruz (prof.cruz@sims.edu)</option>
+                )}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
               <label htmlFor="section" className="block text-xs font-semibold text-slate-300 mb-1">
                 Section Name <span className="text-rose-400">*</span>
               </label>
@@ -140,7 +167,23 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
                 required
                 value={section}
                 onChange={(e) => setSection(e.target.value)}
-                placeholder="e.g. BSIT-3A"
+                placeholder="e.g. 1A"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 font-mono focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="capacity" className="block text-xs font-semibold text-slate-300 mb-1">
+                Maximum Capacity <span className="text-rose-400">*</span>
+              </label>
+              <input
+                id="capacity"
+                type="number"
+                min="1"
+                max="200"
+                required
+                value={capacity}
+                onChange={(e) => setCapacity(Number(e.target.value))}
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 font-mono focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
               />
             </div>
@@ -157,7 +200,7 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
                 required
                 value={schedule}
                 onChange={(e) => setSchedule(e.target.value)}
-                placeholder="MWF 09:00 - 10:30 AM"
+                placeholder="MW 09:00 - 10:30 AM"
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
               />
             </div>
@@ -172,63 +215,29 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
                 required
                 value={room}
                 onChange={(e) => setRoom(e.target.value)}
-                placeholder="CL-302"
+                placeholder="Lab 302"
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="capacity" className="block text-xs font-semibold text-slate-300 mb-1">
-                Maximum Capacity <span className="text-rose-400">*</span>
-              </label>
-              <input
-                id="capacity"
-                type="number"
-                min={1}
-                max={100}
-                required
-                value={capacity}
-                onChange={(e) => setCapacity(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 font-mono focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="instructor_id" className="block text-xs font-semibold text-slate-300 mb-1">
-                Faculty Instructor ID <span className="text-rose-400">*</span>
-              </label>
-              <input
-                id="instructor_id"
-                type="number"
-                required
-                value={instructorId}
-                onChange={(e) => setInstructorId(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 font-mono focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
-              />
-            </div>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 shadow-md transition-all cursor-pointer disabled:opacity-50"
+            >
+              {isSubmitting ? 'Creating...' : 'Create Section'}
+            </button>
           </div>
         </form>
-
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-800 bg-slate-900/80">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            form="offering-form"
-            disabled={isSubmitting}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
-          >
-            {isSubmitting && <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />}
-            <span>Create Section Offering</span>
-          </button>
-        </div>
       </div>
     </div>
   );

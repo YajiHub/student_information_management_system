@@ -90,29 +90,14 @@ async function main() {
     createdPrograms.push(program);
   }
 
-  // 4. Create Core Courses
-  console.log('Creating course catalog...');
+  // 4. Create Core Courses (Clean 5 core courses for demo)
+  console.log('Creating course catalog (5 core courses)...');
   const coursesData = [
     { course_code: 'IT111', course_title: 'Introduction to Computing', units: 3 },
     { course_code: 'IT112', course_title: 'Computer Programming 1', units: 3 },
     { course_code: 'IT121', course_title: 'Computer Programming 2', units: 3 },
     { course_code: 'IT122', course_title: 'Data Structures and Algorithms', units: 3 },
     { course_code: 'IT211', course_title: 'Discrete Mathematics for IT', units: 3 },
-    { course_code: 'IT212', course_title: 'Object-Oriented Programming', units: 3 },
-    { course_code: 'IT221', course_title: 'Database Management Systems 1', units: 3 },
-    { course_code: 'IT222', course_title: 'Networking 1 (Fundamentals)', units: 3 },
-    { course_code: 'IT311', course_title: 'Web Systems and Technologies 1', units: 3 },
-    { course_code: 'IT312', course_title: 'Web Systems and Technologies 2', units: 3 },
-    { course_code: 'IT321', course_title: 'Information Assurance and Security', units: 3 },
-    { course_code: 'IT322', course_title: 'Mobile Application Development', units: 3 },
-    { course_code: 'IT411', course_title: 'Cloud Computing and DevOps', units: 3 },
-    { course_code: 'IT412', course_title: 'Capstone Project 1', units: 3 },
-    { course_code: 'IT421', course_title: 'Capstone Project 2', units: 3 },
-    { course_code: 'GE101', course_title: 'Understanding the Self', units: 3 },
-    { course_code: 'GE102', course_title: 'Purposive Communication', units: 3 },
-    { course_code: 'GE103', course_title: 'Mathematics in the Modern World', units: 3 },
-    { course_code: 'GE104', course_title: 'Ethics', units: 3 },
-    { course_code: 'GE105', course_title: 'The Contemporary World', units: 3 },
   ];
 
   const createdCourses: any[] = [];
@@ -144,15 +129,15 @@ async function main() {
     createdTerms.push(term);
   }
 
-  // 6. Create Course Offerings
-  console.log('Creating course offerings...');
-  const sections = ['1A', '1B', '2A', '2B', '3A', '4A'];
+  // 6. Create Course Offerings (5 core offerings for demo)
+  console.log('Creating course offerings (5 core demo sections)...');
+  const sections = ['1A', '1B', '2A', '2B', '3A'];
   const createdOfferings: any[] = [];
 
-  for (let i = 0; i < 12; i++) {
-    const course = createdCourses[i % createdCourses.length];
-    const term = createdTerms[i < 6 ? 0 : 1];
-    const section = sections[i % sections.length];
+  for (let i = 0; i < 5; i++) {
+    const course = createdCourses[i];
+    const term = createdTerms[0];
+    const section = sections[i];
 
     const offering = await prisma.courseOffering.create({
       data: {
@@ -160,8 +145,8 @@ async function main() {
         academic_term_id: term.id,
         instructor_id: instructorUser.id,
         section,
-        schedule: i % 2 === 0 ? 'MW 09:00 - 10:30' : 'TTH 13:00 - 14:30',
-        room: `Lab Room ${101 + (i % 4)}`,
+        schedule: i % 2 === 0 ? 'MW 09:00 - 10:30 AM' : 'TTH 13:00 - 14:30 PM',
+        room: `Lab Room ${101 + i}`,
         capacity: 40,
       },
     });

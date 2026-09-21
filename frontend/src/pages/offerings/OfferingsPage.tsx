@@ -21,7 +21,7 @@ import { RosterModal } from './RosterModal';
 
 export const OfferingsPage: React.FC = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const canManageOfferings = user?.role === 'ADMIN' || user?.role === 'REGISTRAR';
   const queryClient = useQueryClient();
 
   const [selectedTermId, setSelectedTermId] = useState<string>('');
@@ -54,6 +54,18 @@ export const OfferingsPage: React.FC = () => {
     enabled: !!currentTermId,
   });
   const rawOfferings: CourseOffering[] = offeringsData?.data || [];
+
+  // Extract known instructors from offerings
+  const instructors = Array.from(
+    new Map(
+      rawOfferings
+        .filter((o) => o.instructor && o.instructor.id)
+        .map((o) => [
+          o.instructor!.id,
+          { id: o.instructor!.id, name: o.instructor!.name, email: o.instructor!.email },
+        ])
+    ).values()
+  );
 
   // Filter by search
   const offerings = rawOfferings.filter((o) => {
@@ -110,7 +122,7 @@ export const OfferingsPage: React.FC = () => {
           </p>
         </div>
 
-        {isAdmin && (
+        {canManageOfferings && (
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
@@ -302,6 +314,7 @@ export const OfferingsPage: React.FC = () => {
         onSave={handleSaveOffering}
         courses={courses}
         terms={terms}
+        instructors={instructors}
       />
 
       {/* Roster View Modal */}
