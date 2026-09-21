@@ -66,6 +66,7 @@ export interface Enrollment {
   updated_at?: string;
   student?: Student;
   courseOffering?: CourseOffering;
+  course_offering?: CourseOffering;
   grade?: Grade;
 }
 

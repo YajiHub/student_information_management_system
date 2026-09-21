@@ -73,10 +73,14 @@ export const EnrollmentsPage: React.FC = () => {
     return enrollments.filter((e) => e.status === 'ENROLLED');
   }, [enrollments]);
 
+  // Helper to extract course offering supporting both snake_case and camelCase
+  const getOffering = (e: Enrollment) => e.course_offering || e.courseOffering;
+
   // Calculate currently enrolled units
   const currentUnits = useMemo(() => {
     return activeEnrollments.reduce((sum, e) => {
-      const units = e.courseOffering?.course?.units || 3;
+      const off = getOffering(e);
+      const units = off?.course?.units || 3;
       return sum + units;
     }, 0);
   }, [activeEnrollments]);
@@ -144,7 +148,8 @@ export const EnrollmentsPage: React.FC = () => {
   };
 
   const handleDrop = (enrollment: Enrollment) => {
-    const courseName = enrollment.courseOffering?.course?.course_code || 'this course';
+    const off = getOffering(enrollment);
+    const courseName = off?.course?.course_code || 'this course';
     if (window.confirm(`Are you sure you want to drop ${courseName}?`)) {
       dropMutation.mutate(enrollment.id);
     }
@@ -251,49 +256,53 @@ export const EnrollmentsPage: React.FC = () => {
                 </tr>
               )}
               {!loadingEnrollments &&
-                activeEnrollments.map((e) => (
-                  <tr key={e.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="font-mono font-bold text-emerald-400">
-                        {e.courseOffering?.course?.course_code || 'COURSE'}
-                      </div>
-                      <div className="text-[11px] text-slate-400 truncate max-w-xs">
-                        {e.courseOffering?.course?.course_title}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 font-mono font-semibold text-slate-200">
-                      {e.courseOffering?.section}
-                    </td>
-                    <td className="py-3 px-4 text-center font-mono font-semibold text-white">
-                      {e.courseOffering?.course?.units || 3}
-                    </td>
-                    <td className="py-3 px-4 text-slate-300">
-                      <div>{e.courseOffering?.schedule}</div>
-                      <div className="text-[11px] text-slate-500">{e.courseOffering?.room}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {e.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      {canManageAll ? (
-                        <button
-                          onClick={() => handleDrop(e)}
-                          disabled={dropMutation.isPending}
-                          title="Drop Course"
-                          aria-label={`Drop course ${e.courseOffering?.course?.course_code}`}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-rose-400 hover:text-white hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/40 text-xs transition-colors cursor-pointer"
-                        >
-                          <Trash2 size={13} />
-                          <span>Drop</span>
-                        </button>
-                      ) : (
-                        <span className="text-[11px] font-mono text-slate-500">Official</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                activeEnrollments.map((e) => {
+                  const off = getOffering(e);
+                  const course = off?.course;
+                  return (
+                    <tr key={e.id} className="hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="font-mono font-bold text-emerald-400">
+                          {course?.course_code || 'COURSE'}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate max-w-xs">
+                          {course?.course_title || 'Course Details'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 font-mono font-semibold text-slate-200">
+                        {off?.section || '—'}
+                      </td>
+                      <td className="py-3 px-4 text-center font-mono font-semibold text-white">
+                        {course?.units || 3}
+                      </td>
+                      <td className="py-3 px-4 text-slate-300">
+                        <div>{off?.schedule || 'TBA'}</div>
+                        <div className="text-[11px] text-slate-500">{off?.room || 'TBA'}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          {e.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        {canManageAll ? (
+                          <button
+                            onClick={() => handleDrop(e)}
+                            disabled={dropMutation.isPending}
+                            title="Drop Course"
+                            aria-label={`Drop course ${course?.course_code || off?.section || e.id}`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-rose-400 hover:text-white hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/40 text-xs transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={13} />
+                            <span>Drop</span>
+                          </button>
+                        ) : (
+                          <span className="text-[11px] font-mono text-slate-500">Official</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -380,9 +389,10 @@ export const EnrollmentsPage: React.FC = () => {
                   const offeringUnits = o.course?.units || 3;
 
                   // Check if student is already enrolled in this offering or course
-                  const isAlreadyEnrolled = activeEnrollments.some(
-                    (e) => e.course_offering_id === o.id || e.courseOffering?.course_id === o.course_id
-                  );
+                  const isAlreadyEnrolled = activeEnrollments.some((e) => {
+                    const off = getOffering(e);
+                    return e.course_offering_id === o.id || off?.course_id === o.course_id;
+                  });
 
                   // Check unit limit overload
                   const maxAllowed = activeStudent?.max_allowed_units || 23;
