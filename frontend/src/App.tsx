@@ -14,6 +14,7 @@ import { OfferingsPage } from './pages/offerings/OfferingsPage';
 import { EnrollmentsPage } from './pages/enrollments/EnrollmentsPage';
 import { GradesPage } from './pages/grades/GradesPage';
 import { RecordsPage } from './pages/records/RecordsPage';
+import { ProfilePage } from './pages/profile/ProfilePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,6 +90,7 @@ export const App: React.FC = () => {
                 {/* Shared: All Authorized Roles */}
                 <Route path="offerings" element={<OfferingsPage />} />
                 <Route path="records" element={<RecordsPage />} />
+                <Route path="profile" element={<ProfilePage />} />
               </Route>
             </Route>
 

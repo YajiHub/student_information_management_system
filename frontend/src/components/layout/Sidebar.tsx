@@ -10,6 +10,7 @@ import {
   ClipboardList,
   CheckCircle2,
   FileSpreadsheet,
+  User,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import type { Role } from '../../types/auth.types';
@@ -69,6 +70,12 @@ const NAV_ITEMS: NavItem[] = [
     to: '/records',
     icon: FileSpreadsheet,
     allowedRoles: ['ADMIN', 'REGISTRAR', 'INSTRUCTOR', 'STUDENT'],
+  },
+  {
+    label: 'My Profile',
+    to: '/profile',
+    icon: User,
+    allowedRoles: ['STUDENT'],
   },
 ];
 
