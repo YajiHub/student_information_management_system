@@ -35,7 +35,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
+  @ApiBearerAuth('bearer-jwt')
   @ApiOperation({ summary: 'Invalidate current session / clear authentication state' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
   @ApiResponse({ status: 401, description: 'Missing or invalid authentication' })
@@ -44,7 +44,7 @@ export class AuthController {
   }
 
   @Get('me')
-  @ApiBearerAuth()
+  @ApiBearerAuth('bearer-jwt')
   @ApiOperation({ summary: 'Retrieve authenticated user profile and roles' })
   @ApiResponse({ status: 200, description: 'Current user profile retrieved' })
   @ApiResponse({ status: 401, description: 'Missing or invalid authentication' })
