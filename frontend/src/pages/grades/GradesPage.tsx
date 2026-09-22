@@ -23,7 +23,7 @@ import type { AxiosError } from 'axios';
 import type { ApiErrorResponse } from '../../types/api.types';
 
 // Philippine standard discrete collegiate grading scale
-export const VALID_GRADE_VALUES = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 5.0];
+export const VALID_GRADE_VALUES = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 4.00, 5.0];
 export const VALID_GRADE_OPTIONS = [
   { value: '1.00', label: '1.00 (Excellent)' },
   { value: '1.25', label: '1.25 (Superior)' },
@@ -34,6 +34,7 @@ export const VALID_GRADE_OPTIONS = [
   { value: '2.50', label: '2.50 (Average)' },
   { value: '2.75', label: '2.75 (Below Average)' },
   { value: '3.00', label: '3.00 (Passing)' },
+  { value: '4.00', label: '4.00 (Conditional/Removal)' },
   { value: '5.00', label: '5.00 (Failed)' },
 ];
 
@@ -128,9 +129,9 @@ export const GradesPage: React.FC = () => {
   const classGwa =
     gradedEnrollments.length > 0
       ? (
-          gradedEnrollments.reduce((sum, e) => sum + Number(e.grade!.numerical_grade), 0) /
-          gradedEnrollments.length
-        ).toFixed(2)
+        gradedEnrollments.reduce((sum, e) => sum + Number(e.grade!.numerical_grade), 0) /
+        gradedEnrollments.length
+      ).toFixed(2)
       : '—';
   const passedCount = enrollments.filter((e) => e.grade?.remarks === 'PASSED').length;
   const failedCount = enrollments.filter((e) => e.grade?.remarks === 'FAILED').length;
@@ -200,28 +201,28 @@ export const GradesPage: React.FC = () => {
       input?.midterm !== undefined
         ? input.midterm === '' ? undefined : Number(input.midterm)
         : e.grade?.midterm_grade !== null && e.grade?.midterm_grade !== undefined
-        ? Number(e.grade.midterm_grade)
-        : undefined;
+          ? Number(e.grade.midterm_grade)
+          : undefined;
 
     const finalVal =
       input?.final !== undefined
         ? input.final === '' ? undefined : Number(input.final)
         : e.grade?.final_grade !== null && e.grade?.final_grade !== undefined
-        ? Number(e.grade.final_grade)
-        : undefined;
+          ? Number(e.grade.final_grade)
+          : undefined;
 
     // Strict validation on official discrete collegiate scale
     if (midtermVal !== undefined && !VALID_GRADE_VALUES.includes(midtermVal)) {
       setFeedback({
         type: 'error',
-        text: 'Midterm grade must be a valid standard collegiate mark (1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, or 5.00).',
+        text: 'Midterm grade must be a valid standard collegiate mark (1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, 4.00 or 5.00).',
       });
       return;
     }
     if (finalVal !== undefined && !VALID_GRADE_VALUES.includes(finalVal)) {
       setFeedback({
         type: 'error',
-        text: 'Final grade must be a valid standard collegiate mark (1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, or 5.00).',
+        text: 'Final grade must be a valid standard collegiate mark (1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, 4.00 or 5.00).',
       });
       return;
     }
@@ -283,11 +284,10 @@ export const GradesPage: React.FC = () => {
       {feedback && (
         <div
           role="status"
-          className={`p-3.5 rounded-xl text-xs flex items-center gap-2.5 animate-fade-in ${
-            feedback.type === 'success'
-              ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
-              : 'bg-rose-500/10 border border-rose-500/20 text-rose-300'
-          }`}
+          className={`p-3.5 rounded-xl text-xs flex items-center gap-2.5 animate-fade-in ${feedback.type === 'success'
+            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
+            : 'bg-rose-500/10 border border-rose-500/20 text-rose-300'
+            }`}
         >
           {feedback.type === 'success' ? (
             <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
@@ -333,11 +333,10 @@ export const GradesPage: React.FC = () => {
             {/* Filter Toggle: Only with enrolled students */}
             <button
               onClick={() => setOnlyWithStudents((prev) => !prev)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
-                onlyWithStudents
-                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${onlyWithStudents
+                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                }`}
             >
               <Filter size={12} />
               <span>With Students Only</span>
@@ -370,20 +369,18 @@ export const GradesPage: React.FC = () => {
                   key={o.id}
                   onClick={() => handleSelectOffering(o.id)}
                   type="button"
-                  className={`p-3 rounded-xl text-left transition-all border cursor-pointer group ${
-                    isSelected
-                      ? 'bg-emerald-950/40 border-emerald-500/80 shadow-md ring-1 ring-emerald-500/40'
-                      : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900'
-                  }`}
+                  className={`p-3 rounded-xl text-left transition-all border cursor-pointer group ${isSelected
+                    ? 'bg-emerald-950/40 border-emerald-500/80 shadow-md ring-1 ring-emerald-500/40'
+                    : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900'
+                    }`}
                 >
                   <div className="flex items-center justify-between gap-1 mb-1">
                     <div className="flex items-center gap-1.5">
                       <span
-                        className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold ${
-                          isSelected
-                            ? 'bg-emerald-500 text-slate-950'
-                            : 'bg-slate-800 text-slate-300 group-hover:text-emerald-400'
-                        }`}
+                        className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold ${isSelected
+                          ? 'bg-emerald-500 text-slate-950'
+                          : 'bg-slate-800 text-slate-300 group-hover:text-emerald-400'
+                          }`}
                       >
                         {o.section}
                       </span>
@@ -392,11 +389,10 @@ export const GradesPage: React.FC = () => {
                       </span>
                     </div>
                     <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                        count > 0
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : 'bg-slate-800/50 text-slate-500 border-slate-800'
-                      }`}
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${count > 0
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-slate-800/50 text-slate-500 border-slate-800'
+                        }`}
                     >
                       {count} {count === 1 ? 'student' : 'students'}
                     </span>
@@ -516,15 +512,15 @@ export const GradesPage: React.FC = () => {
                     gradeInputs[e.id]?.midterm !== undefined
                       ? gradeInputs[e.id].midterm
                       : e.grade?.midterm_grade !== null && e.grade?.midterm_grade !== undefined
-                      ? Number(e.grade.midterm_grade).toFixed(2)
-                      : '';
+                        ? Number(e.grade.midterm_grade).toFixed(2)
+                        : '';
 
                   const currentFinal =
                     gradeInputs[e.id]?.final !== undefined
                       ? gradeInputs[e.id].final
                       : e.grade?.final_grade !== null && e.grade?.final_grade !== undefined
-                      ? Number(e.grade.final_grade).toFixed(2)
-                      : '';
+                        ? Number(e.grade.final_grade).toFixed(2)
+                        : '';
 
                   const numerical = e.grade?.numerical_grade;
                   const remarks = e.grade?.remarks;
@@ -539,11 +535,10 @@ export const GradesPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            student?.student_type === 'IRREGULAR'
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          }`}
+                          className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${student?.student_type === 'IRREGULAR'
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            }`}
                         >
                           {student?.student_type || 'REGULAR'}
                         </span>
