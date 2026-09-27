@@ -45,6 +45,8 @@ describe('Sidebar Component Role-Based Navigation', () => {
     expect(screen.getByText('Enrollment Console')).toBeInTheDocument();
     expect(screen.getByText('Grades Entry')).toBeInTheDocument();
     expect(screen.getByText('Academic Records')).toBeInTheDocument();
+    expect(screen.getByText('User Accounts')).toBeInTheDocument();
+    expect(screen.getByText('Activity Logs')).toBeInTheDocument();
   });
 
   it('should hide administrative links when logged in as STUDENT', () => {
@@ -60,6 +62,8 @@ describe('Sidebar Component Role-Based Navigation', () => {
     expect(screen.queryByText('Academic Terms')).not.toBeInTheDocument();
     expect(screen.queryByText('Programs & Courses')).not.toBeInTheDocument();
     expect(screen.queryByText('Grades Entry')).not.toBeInTheDocument();
+    expect(screen.queryByText('User Accounts')).not.toBeInTheDocument();
+    expect(screen.queryByText('Activity Logs')).not.toBeInTheDocument();
 
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Course Offerings')).toBeInTheDocument();
@@ -80,6 +84,8 @@ describe('Sidebar Component Role-Based Navigation', () => {
     expect(screen.queryByText('Academic Terms')).not.toBeInTheDocument();
     expect(screen.queryByText('Programs & Courses')).not.toBeInTheDocument();
     expect(screen.queryByText('Enrollment Console')).not.toBeInTheDocument();
+    expect(screen.queryByText('User Accounts')).not.toBeInTheDocument();
+    expect(screen.queryByText('Activity Logs')).not.toBeInTheDocument();
     expect(screen.getByText('Course Offerings')).toBeInTheDocument();
     expect(screen.getByText('Grades Entry')).toBeInTheDocument();
     expect(screen.getByText('Academic Records')).toBeInTheDocument();

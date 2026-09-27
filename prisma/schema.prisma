@@ -143,6 +143,30 @@ model Grade {
   @@map("grades")
 }
 
+model AuditLog {
+  id            Int      @id @default(autoincrement())
+  actor_id      Int?
+  actor_email   String?
+  actor_role    String?
+  action        String
+  method        String
+  path          String
+  resource      String?
+  resource_id   String?
+  status_code   Int
+  success       Boolean
+  duration_ms   Int
+  ip            String?
+  user_agent    String?
+  error_message String?
+  created_at    DateTime @default(now())
+
+  @@index([created_at])
+  @@index([actor_id])
+  @@index([resource])
+  @@map("audit_logs")
+}
+
 enum Role {
   ADMIN
   REGISTRAR

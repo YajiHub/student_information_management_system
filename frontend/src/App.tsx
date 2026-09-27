@@ -15,6 +15,8 @@ import { EnrollmentsPage } from './pages/enrollments/EnrollmentsPage';
 import { GradesPage } from './pages/grades/GradesPage';
 import { RecordsPage } from './pages/records/RecordsPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
+import { UsersPage } from './pages/admin/UsersPage';
+import { LogsPage } from './pages/admin/LogsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,6 +93,24 @@ export const App: React.FC = () => {
                 <Route path="offerings" element={<OfferingsPage />} />
                 <Route path="records" element={<RecordsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
+
+                {/* System Administration (Admin Only) */}
+                <Route
+                  path="admin/users"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                      <UsersPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="admin/logs"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                      <LogsPage />
+                    </ProtectedRoute>
+                  }
+                />
               </Route>
             </Route>
 

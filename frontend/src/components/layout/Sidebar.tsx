@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   FileSpreadsheet,
   User,
+  ShieldCheck,
+  ScrollText,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import type { Role } from '../../types/auth.types';
@@ -76,6 +78,18 @@ const NAV_ITEMS: NavItem[] = [
     to: '/profile',
     icon: User,
     allowedRoles: ['STUDENT'],
+  },
+  {
+    label: 'User Accounts',
+    to: '/admin/users',
+    icon: ShieldCheck,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    label: 'Activity Logs',
+    to: '/admin/logs',
+    icon: ScrollText,
+    allowedRoles: ['ADMIN'],
   },
 ];
 

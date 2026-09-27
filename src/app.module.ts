@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
@@ -10,10 +10,14 @@ import { StudentsModule } from './students/students.module';
 import { CourseOfferingsModule } from './course-offerings/course-offerings.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { GradesModule } from './grades/grades.module';
+import { UsersModule } from './users/users.module';
+import { AuditModule } from './audit/audit.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { AuditLogInterceptor } from './audit/audit-log.interceptor';
+import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 
 @Module({
   imports: [
@@ -30,6 +34,8 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     CourseOfferingsModule,
     EnrollmentsModule,
     GradesModule,
+    UsersModule,
+    AuditModule,
   ],
   providers: [
     {
@@ -45,9 +51,17 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
       useClass: TransformInterceptor,
     },
     {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditLogInterceptor,
+    },
+    {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+  }
+}
