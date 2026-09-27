@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   Put,
+  Query,
   ParseIntPipe,
 } from '@nestjs/common';
 import {
@@ -18,6 +19,7 @@ import { Role } from '@prisma/client';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { QueryCoursesDto } from './dto/query-courses.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiTags('Courses')
@@ -38,10 +40,10 @@ export class CoursesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all courses in catalog' })
+  @ApiOperation({ summary: 'List courses in catalog with search and pagination' })
   @ApiResponse({ status: 200, description: 'Courses retrieved successfully' })
-  findAll() {
-    return this.coursesService.findAll();
+  findAll(@Query() query: QueryCoursesDto) {
+    return this.coursesService.findAll(query);
   }
 
   @Get(':id')

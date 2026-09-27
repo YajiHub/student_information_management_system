@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { referenceApi } from '../../api/reference.api';
 import type { Program, Course } from '../../types/academic.types';
@@ -16,6 +18,8 @@ import { useAuth } from '../../hooks/useAuth';
 export const CoursesPage: React.FC = () => {
   const { user } = useAuth();
   const canManageCatalog = user?.role === 'ADMIN' || user?.role === 'REGISTRAR';
+  // Backend DELETE endpoints for programs and courses are restricted to ADMIN
+  const isAdmin = user?.role === 'ADMIN';
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'PROGRAMS' | 'COURSES'>('COURSES');
@@ -25,6 +29,10 @@ export const CoursesPage: React.FC = () => {
   // Modals
   const [isProgramModalOpen, setIsProgramModalOpen] = useState(false);
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+
+  // Edit tracking — null means "create mode"
+  const [editingProgram, setEditingProgram] = useState<Program | null>(null);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
   // Program Form state
   const [progCode, setProgCode] = useState('');
@@ -50,60 +58,160 @@ export const CoursesPage: React.FC = () => {
   });
   const courses: Course[] = coursesData?.data || [];
 
-  // Mutations
+  const showFeedback = (type: 'success' | 'error', text: string) => {
+    setFeedback({ type, text });
+    setTimeout(() => setFeedback(null), 4000);
+  };
+
+  // ── Program Mutations ──
   const createProgramMutation = useMutation({
     mutationFn: (payload: { code: string; name: string; description?: string }) =>
       referenceApi.createProgram(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reference', 'programs'] });
-      setIsProgramModalOpen(false);
-      setProgCode('');
-      setProgName('');
-      setProgDesc('');
-      setFeedback({ type: 'success', text: 'Program created successfully.' });
-      setTimeout(() => setFeedback(null), 4000);
+      closeProgramModal();
+      showFeedback('success', 'Program created successfully.');
     },
     onError: (err: any) => {
-      setFeedback({ type: 'error', text: err?.response?.data?.message || 'Failed to create program.' });
+      showFeedback('error', err?.response?.data?.message || 'Failed to create program.');
     },
   });
 
-  const createCourseMutation = useMutation({
-    mutationFn: (payload: {
-      course_code: string;
-      course_title: string;
-      description?: string;
-      units: number;
-    }) => referenceApi.createCourse(payload),
+  const updateProgramMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: { code: string; name: string; description?: string } }) =>
+      referenceApi.updateProgram(id, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reference', 'courses'] });
-      setIsCourseModalOpen(false);
-      setCourseCode('');
-      setCourseTitle('');
-      setCourseDesc('');
-      setCourseUnits(3);
-      setFeedback({ type: 'success', text: 'Course added to catalog successfully.' });
-      setTimeout(() => setFeedback(null), 4000);
+      queryClient.invalidateQueries({ queryKey: ['reference', 'programs'] });
+      closeProgramModal();
+      showFeedback('success', 'Program updated successfully.');
     },
     onError: (err: any) => {
-      setFeedback({ type: 'error', text: err?.response?.data?.message || 'Failed to add course.' });
+      showFeedback('error', err?.response?.data?.message || 'Failed to update program.');
     },
   });
+
+  const deleteProgramMutation = useMutation({
+    mutationFn: (id: number) => referenceApi.deleteProgram(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reference', 'programs'] });
+      showFeedback('success', 'Program deleted.');
+    },
+    onError: (err: any) => {
+      showFeedback('error', err?.response?.data?.message || 'Failed to delete program. It may have active students.');
+    },
+  });
+
+  // ── Course Mutations ──
+  const createCourseMutation = useMutation({
+    mutationFn: (payload: { course_code: string; course_title: string; description?: string; units: number }) =>
+      referenceApi.createCourse(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reference', 'courses'] });
+      closeCourseModal();
+      showFeedback('success', 'Course added to catalog successfully.');
+    },
+    onError: (err: any) => {
+      showFeedback('error', err?.response?.data?.message || 'Failed to add course.');
+    },
+  });
+
+  const updateCourseMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: { course_code: string; course_title: string; description?: string; units: number } }) =>
+      referenceApi.updateCourse(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reference', 'courses'] });
+      closeCourseModal();
+      showFeedback('success', 'Course updated successfully.');
+    },
+    onError: (err: any) => {
+      showFeedback('error', err?.response?.data?.message || 'Failed to update course.');
+    },
+  });
+
+  const deleteCourseMutation = useMutation({
+    mutationFn: (id: number) => referenceApi.deleteCourse(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reference', 'courses'] });
+      showFeedback('success', 'Course deleted from catalog.');
+    },
+    onError: (err: any) => {
+      showFeedback('error', err?.response?.data?.message || 'Failed to delete course. It may have active offerings.');
+    },
+  });
+
+  // ── Modal helpers ──
+  const openProgramEdit = (p: Program) => {
+    setEditingProgram(p);
+    setProgCode(p.code);
+    setProgName(p.name);
+    setProgDesc(p.description || '');
+    setIsProgramModalOpen(true);
+  };
+
+  const closeProgramModal = () => {
+    setIsProgramModalOpen(false);
+    setEditingProgram(null);
+    setProgCode('');
+    setProgName('');
+    setProgDesc('');
+  };
+
+  const openCourseEdit = (c: Course) => {
+    setEditingCourse(c);
+    setCourseCode(c.course_code);
+    setCourseTitle(c.course_title);
+    setCourseDesc(c.description || '');
+    setCourseUnits(c.units);
+    setIsCourseModalOpen(true);
+  };
+
+  const closeCourseModal = () => {
+    setIsCourseModalOpen(false);
+    setEditingCourse(null);
+    setCourseCode('');
+    setCourseTitle('');
+    setCourseDesc('');
+    setCourseUnits(3);
+  };
 
   const handleProgramSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createProgramMutation.mutate({ code: progCode, name: progName, description: progDesc || undefined });
+    const payload = { code: progCode, name: progName, description: progDesc || undefined };
+    if (editingProgram) {
+      updateProgramMutation.mutate({ id: editingProgram.id, payload });
+    } else {
+      createProgramMutation.mutate(payload);
+    }
   };
 
   const handleCourseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createCourseMutation.mutate({
+    const payload = {
       course_code: courseCode,
       course_title: courseTitle,
       description: courseDesc || undefined,
       units: Number(courseUnits),
-    });
+    };
+    if (editingCourse) {
+      updateCourseMutation.mutate({ id: editingCourse.id, payload });
+    } else {
+      createCourseMutation.mutate(payload);
+    }
   };
+
+  const handleDeleteProgram = (p: Program) => {
+    if (window.confirm(`Delete program "${p.code} — ${p.name}"? This cannot be undone.`)) {
+      deleteProgramMutation.mutate(p.id);
+    }
+  };
+
+  const handleDeleteCourse = (c: Course) => {
+    if (window.confirm(`Delete course "${c.course_code} — ${c.course_title}"? This cannot be undone.`)) {
+      deleteCourseMutation.mutate(c.id);
+    }
+  };
+
+  const isMutating = createProgramMutation.isPending || updateProgramMutation.isPending || createCourseMutation.isPending || updateCourseMutation.isPending;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -128,7 +236,7 @@ export const CoursesPage: React.FC = () => {
           <div className="flex items-center gap-2">
             {activeTab === 'PROGRAMS' ? (
               <button
-                onClick={() => setIsProgramModalOpen(true)}
+                onClick={() => { setEditingProgram(null); setProgCode(''); setProgName(''); setProgDesc(''); setIsProgramModalOpen(true); }}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
               >
                 <Plus size={16} />
@@ -136,7 +244,7 @@ export const CoursesPage: React.FC = () => {
               </button>
             ) : (
               <button
-                onClick={() => setIsCourseModalOpen(true)}
+                onClick={() => { setEditingCourse(null); setCourseCode(''); setCourseTitle(''); setCourseDesc(''); setCourseUnits(3); setIsCourseModalOpen(true); }}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
               >
                 <Plus size={16} />
@@ -222,19 +330,20 @@ export const CoursesPage: React.FC = () => {
                   <th className="py-3 px-4">Course Title</th>
                   <th className="py-3 px-4">Description</th>
                   <th className="py-3 px-4 text-center">Units</th>
+                  {canManageCatalog && <th className="py-3 px-4 text-center">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
                 {loadingCourses && (
                   <tr>
-                    <td colSpan={4} className="py-10 text-center text-slate-500">
+                    <td colSpan={canManageCatalog ? 5 : 4} className="py-10 text-center text-slate-500">
                       Loading course catalog...
                     </td>
                   </tr>
                 )}
                 {!loadingCourses && courses.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-10 text-center text-slate-500">
+                    <td colSpan={canManageCatalog ? 5 : 4} className="py-10 text-center text-slate-500">
                       No courses found matching search criteria.
                     </td>
                   </tr>
@@ -252,6 +361,28 @@ export const CoursesPage: React.FC = () => {
                           {c.units} {c.units === 1 ? 'unit' : 'units'}
                         </span>
                       </td>
+                      {canManageCatalog && (
+                        <td className="py-3.5 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => openCourseEdit(c)}
+                              title="Edit course"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleDeleteCourse(c)}
+                                title="Delete course"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
               </tbody>
@@ -269,19 +400,20 @@ export const CoursesPage: React.FC = () => {
                 <th className="py-3 px-4">Program Code</th>
                 <th className="py-3 px-4">Degree Title</th>
                 <th className="py-3 px-4">Description</th>
+                {canManageCatalog && <th className="py-3 px-4 text-center">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
               {loadingPrograms && (
                 <tr>
-                  <td colSpan={3} className="py-10 text-center text-slate-500">
+                  <td colSpan={canManageCatalog ? 4 : 3} className="py-10 text-center text-slate-500">
                     Loading academic programs...
                   </td>
                 </tr>
               )}
               {!loadingPrograms && programs.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="py-10 text-center text-slate-500">
+                  <td colSpan={canManageCatalog ? 4 : 3} className="py-10 text-center text-slate-500">
                     No programs registered in the database.
                   </td>
                 </tr>
@@ -292,6 +424,28 @@ export const CoursesPage: React.FC = () => {
                     <td className="py-3.5 px-4 font-mono font-bold text-emerald-400">{p.code}</td>
                     <td className="py-3.5 px-4 font-semibold text-white">{p.name}</td>
                     <td className="py-3.5 px-4 text-slate-400">{p.description || 'Degree program'}</td>
+                    {canManageCatalog && (
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => openProgramEdit(p)}
+                            title="Edit program"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDeleteProgram(p)}
+                              title="Delete program"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
             </tbody>
@@ -299,14 +453,16 @@ export const CoursesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Program Create Modal */}
+      {/* Program Create/Edit Modal */}
       {isProgramModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fade-in space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <h2 className="text-base font-bold text-white">Create Academic Program</h2>
+              <h2 className="text-base font-bold text-white">
+                {editingProgram ? 'Edit Academic Program' : 'Create Academic Program'}
+              </h2>
               <button
-                onClick={() => setIsProgramModalOpen(false)}
+                onClick={closeProgramModal}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
               >
                 <X size={18} />
@@ -354,17 +510,19 @@ export const CoursesPage: React.FC = () => {
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setIsProgramModalOpen(false)}
+                  onClick={closeProgramModal}
                   className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={createProgramMutation.isPending}
+                  disabled={isMutating}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500"
                 >
-                  {createProgramMutation.isPending ? 'Creating...' : 'Save Program'}
+                  {isMutating
+                    ? (editingProgram ? 'Saving...' : 'Creating...')
+                    : (editingProgram ? 'Save Changes' : 'Save Program')}
                 </button>
               </div>
             </form>
@@ -372,14 +530,16 @@ export const CoursesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Course Create Modal */}
+      {/* Course Create/Edit Modal */}
       {isCourseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fade-in space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <h2 className="text-base font-bold text-white">Create Course Catalog Item</h2>
+              <h2 className="text-base font-bold text-white">
+                {editingCourse ? 'Edit Course' : 'Create Course Catalog Item'}
+              </h2>
               <button
-                onClick={() => setIsCourseModalOpen(false)}
+                onClick={closeCourseModal}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
               >
                 <X size={18} />
@@ -442,17 +602,19 @@ export const CoursesPage: React.FC = () => {
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setIsCourseModalOpen(false)}
+                  onClick={closeCourseModal}
                   className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={createCourseMutation.isPending}
+                  disabled={isMutating}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500"
                 >
-                  {createCourseMutation.isPending ? 'Adding...' : 'Add Course'}
+                  {isMutating
+                    ? (editingCourse ? 'Saving...' : 'Adding...')
+                    : (editingCourse ? 'Save Changes' : 'Add Course')}
                 </button>
               </div>
             </form>

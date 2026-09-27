@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
-import type { Course, AcademicTerm } from '../../types/academic.types';
+import type { Course, AcademicTerm, CourseOffering } from '../../types/academic.types';
 import type { AxiosError } from 'axios';
 import type { ApiErrorResponse } from '../../types/api.types';
 
@@ -19,6 +19,8 @@ interface OfferingModalProps {
   courses: Course[];
   terms: AcademicTerm[];
   instructors?: { id: number; name: string; email: string }[];
+  /** When provided the modal opens in edit mode, prefilled with this offering. */
+  offering?: CourseOffering | null;
 }
 
 export const OfferingModal: React.FC<OfferingModalProps> = ({
@@ -28,15 +30,19 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
   courses,
   terms,
   instructors,
+  offering,
 }) => {
-  const [courseId, setCourseId] = useState<number>(courses[0]?.id || 1);
-  const [termId, setTermId] = useState<number>(terms.find((t) => t.is_active)?.id || terms[0]?.id || 1);
+  const isEdit = !!offering;
   const defaultInstId = instructors && instructors.length > 0 ? instructors[0].id : 3;
-  const [instructorId, setInstructorId] = useState<number>(defaultInstId);
-  const [section, setSection] = useState('1A');
-  const [schedule, setSchedule] = useState('MW 09:00 - 10:30 AM');
-  const [room, setRoom] = useState('Lab 302');
-  const [capacity, setCapacity] = useState<number>(40);
+  const [courseId, setCourseId] = useState<number>(offering?.course_id ?? courses[0]?.id ?? 1);
+  const [termId, setTermId] = useState<number>(
+    offering?.academic_term_id ?? terms.find((t) => t.is_active)?.id ?? terms[0]?.id ?? 1,
+  );
+  const [instructorId, setInstructorId] = useState<number>(offering?.instructor_id ?? defaultInstId);
+  const [section, setSection] = useState(offering?.section ?? '1A');
+  const [schedule, setSchedule] = useState(offering?.schedule ?? 'MW 09:00 - 10:30 AM');
+  const [room, setRoom] = useState(offering?.room ?? 'Lab 302');
+  const [capacity, setCapacity] = useState<number>(offering?.capacity ?? 40);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -66,7 +72,10 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
       onClose();
     } catch (err) {
       const axiosError = err as AxiosError<ApiErrorResponse>;
-      setErrorMsg(axiosError.response?.data?.message || 'Failed to create course section offering.');
+      setErrorMsg(
+        axiosError.response?.data?.message ||
+          (isEdit ? 'Failed to update the course section offering.' : 'Failed to create course section offering.'),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -77,8 +86,14 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
       <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl animate-fade-in flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
           <div>
-            <h2 className="text-base font-bold text-white">Create Section Offering</h2>
-            <p className="text-xs text-slate-400">Add a course offering with section capacity, schedule, and instructor</p>
+            <h2 className="text-base font-bold text-white">
+              {isEdit ? 'Edit Section Offering' : 'Create Section Offering'}
+            </h2>
+            <p className="text-xs text-slate-400">
+              {isEdit
+                ? 'Update the section schedule, venue, instructor, or capacity limit'
+                : 'Add a course offering with section capacity, schedule, and instructor'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -234,7 +249,9 @@ export const OfferingModal: React.FC<OfferingModalProps> = ({
               disabled={isSubmitting}
               className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 shadow-md transition-all cursor-pointer disabled:opacity-50"
             >
-              {isSubmitting ? 'Creating...' : 'Create Section'}
+              {isSubmitting
+                ? (isEdit ? 'Saving...' : 'Creating...')
+                : (isEdit ? 'Save Changes' : 'Create Section')}
             </button>
           </div>
         </form>

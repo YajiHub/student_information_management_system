@@ -1,7 +1,6 @@
 import apiClient from './client';
 import type { ApiResponse } from '@/types/api.types';
-import type { CourseOffering, Enrollment } from '@/types/academic.types';
-import type { Student } from '@/types/student.types';
+import type { CourseOffering, Enrollment, RosterEntry } from '@/types/academic.types';
 
 export const enrollmentsApi = {
   getOfferings: async (params?: {
@@ -25,8 +24,10 @@ export const enrollmentsApi = {
     return res.data;
   },
 
-  getOfferingStudents: async (offeringId: number): Promise<ApiResponse<Student[]>> => {
-    const res = await apiClient.get<ApiResponse<Student[]>>(`/course-offerings/${offeringId}/students`);
+  getOfferingStudents: async (offeringId: number): Promise<ApiResponse<RosterEntry[]>> => {
+    const res = await apiClient.get<ApiResponse<RosterEntry[]>>(
+      `/course-offerings/${offeringId}/students`,
+    );
     return res.data;
   },
 
@@ -49,6 +50,27 @@ export const enrollmentsApi = {
 
   drop: async (enrollmentId: number): Promise<ApiResponse<null>> => {
     const res = await apiClient.delete<ApiResponse<null>>(`/enrollments/${enrollmentId}`);
+    return res.data;
+  },
+
+  updateOffering: async (
+    id: number,
+    payload: {
+      course_id?: number;
+      academic_term_id?: number;
+      instructor_id?: number;
+      section?: string;
+      schedule?: string;
+      room?: string;
+      capacity?: number;
+    }
+  ): Promise<ApiResponse<CourseOffering>> => {
+    const res = await apiClient.put<ApiResponse<CourseOffering>>(`/course-offerings/${id}`, payload);
+    return res.data;
+  },
+
+  deleteOffering: async (id: number): Promise<ApiResponse<null>> => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/course-offerings/${id}`);
     return res.data;
   },
 };

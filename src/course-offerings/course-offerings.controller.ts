@@ -82,7 +82,7 @@ export class CourseOfferingsController {
   }
 
   @Get(':id/students')
-  @Roles(Role.ADMIN, Role.REGISTRAR, Role.INSTRUCTOR)
+  @Roles(Role.ADMIN, Role.REGISTRAR, Role.INSTRUCTOR, Role.STUDENT)
   @ApiOperation({ summary: 'List all students enrolled in a course offering' })
   @ApiResponse({ status: 200, description: 'Enrolled students retrieved' })
   @ApiResponse({ status: 403, description: 'Forbidden: Instructor not assigned to this offering' })

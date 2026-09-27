@@ -11,6 +11,8 @@ import {
   Clock,
   MapPin,
   UserCheck,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { enrollmentsApi } from '../../api/enrollments.api';
 import { referenceApi } from '../../api/reference.api';
@@ -22,11 +24,15 @@ import { RosterModal } from './RosterModal';
 export const OfferingsPage: React.FC = () => {
   const { user } = useAuth();
   const canManageOfferings = user?.role === 'ADMIN' || user?.role === 'REGISTRAR';
+  // Backend DELETE /course-offerings/:id is restricted to ADMIN
+  const canDeleteOffering = user?.role === 'ADMIN';
   const queryClient = useQueryClient();
 
   const [selectedTermId, setSelectedTermId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  // null = create mode, otherwise the offering being edited
+  const [editingOffering, setEditingOffering] = useState<CourseOffering | null>(null);
   const [rosterOffering, setRosterOffering] = useState<CourseOffering | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -99,8 +105,67 @@ export const OfferingsPage: React.FC = () => {
     },
   });
 
+  // Update offering mutation
+  const updateOfferingMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Record<string, any> }) =>
+      enrollmentsApi.updateOffering(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['offerings'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      closeOfferingModal();
+      setFeedback({ type: 'success', text: 'Course section offering updated successfully.' });
+      setTimeout(() => setFeedback(null), 4000);
+    },
+    onError: (err: any) => {
+      setFeedback({ type: 'error', text: err?.response?.data?.message || 'Failed to update course offering.' });
+    },
+  });
+
+  // Delete offering mutation (HTTP 409 when the section still has enrollments)
+  const deleteOfferingMutation = useMutation({
+    mutationFn: (id: number) => enrollmentsApi.deleteOffering(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['offerings'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setFeedback({ type: 'success', text: 'Course section offering deleted.' });
+      setTimeout(() => setFeedback(null), 4000);
+    },
+    onError: (err: any) => {
+      setFeedback({
+        type: 'error',
+        text: err?.response?.data?.message || 'Failed to delete course offering. It may still have enrolled students.',
+      });
+    },
+  });
+
+  const openCreateModal = () => {
+    setEditingOffering(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (offering: CourseOffering) => {
+    setEditingOffering(offering);
+    setIsModalOpen(true);
+  };
+
+  const closeOfferingModal = () => {
+    setIsModalOpen(false);
+    setEditingOffering(null);
+  };
+
   const handleSaveOffering = async (payload: any) => {
-    await createOfferingMutation.mutateAsync(payload);
+    if (editingOffering) {
+      await updateOfferingMutation.mutateAsync({ id: editingOffering.id, payload });
+    } else {
+      await createOfferingMutation.mutateAsync(payload);
+    }
+  };
+
+  const handleDeleteOffering = (o: CourseOffering) => {
+    const label = `${o.course?.course_code || `Course #${o.course_id}`} - Section ${o.section}`;
+    if (window.confirm(`Delete ${label}? This cannot be undone. Sections with enrolled students cannot be deleted.`)) {
+      deleteOfferingMutation.mutate(o.id);
+    }
   };
 
   return (
@@ -124,7 +189,7 @@ export const OfferingsPage: React.FC = () => {
 
         {canManageOfferings && (
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={openCreateModal}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
           >
             <Plus size={16} />
@@ -197,12 +262,13 @@ export const OfferingsPage: React.FC = () => {
                 <th className="py-3 px-4">Instructor</th>
                 <th className="py-3 px-4 min-w-[160px]">Capacity &amp; Enrolled</th>
                 <th className="py-3 px-4 text-right">Roster</th>
+                {canManageOfferings && <th className="py-3 px-4 text-center">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
               {isLoading && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                  <td colSpan={canManageOfferings ? 8 : 7} className="py-12 text-center text-slate-400">
                     <div className="inline-flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-500 border-t-transparent" />
                       <span>Loading course offerings...</span>
@@ -213,7 +279,7 @@ export const OfferingsPage: React.FC = () => {
 
               {!isLoading && offerings.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                  <td colSpan={canManageOfferings ? 8 : 7} className="py-12 text-center text-slate-500">
                     No course offerings found for this academic term.
                   </td>
                 </tr>
@@ -299,6 +365,30 @@ export const OfferingsPage: React.FC = () => {
                           <span>Roster</span>
                         </button>
                       </td>
+                      {canManageOfferings && (
+                        <td className="py-3.5 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => openEditModal(o)}
+                              title="Edit offering"
+                              aria-label={`Edit ${o.section}`}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            {canDeleteOffering && (
+                              <button
+                                onClick={() => handleDeleteOffering(o)}
+                                title="Delete offering"
+                                aria-label={`Delete ${o.section}`}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -307,10 +397,12 @@ export const OfferingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Offering Create Modal */}
+      {/* Offering Create / Edit Modal */}
       <OfferingModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        key={editingOffering?.id ?? 'new'}
+        isOpen={isModalOpen}
+        offering={editingOffering}
+        onClose={closeOfferingModal}
         onSave={handleSaveOffering}
         courses={courses}
         terms={terms}

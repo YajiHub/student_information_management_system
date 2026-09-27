@@ -10,6 +10,8 @@ import {
   ToggleLeft,
   ToggleRight,
   Sparkles,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { referenceApi } from '../../api/reference.api';
 import type { AcademicTerm, Semester } from '../../types/academic.types';
@@ -19,9 +21,12 @@ export const TermsPage: React.FC = () => {
   const { user } = useAuth();
   // Both Admin and Registrar manage academic terms according to the laboratory specification
   const canManageTerms = user?.role === 'ADMIN' || user?.role === 'REGISTRAR';
+  // Backend DELETE /academic-terms/:id is restricted to ADMIN
+  const isAdmin = user?.role === 'ADMIN';
   const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTerm, setEditingTerm] = useState<AcademicTerm | null>(null);
   const [academicYear, setAcademicYear] = useState('2026-2027');
   const [semester, setSemester] = useState<Semester>('FIRST_SEMESTER');
   const [startDate, setStartDate] = useState('2026-08-15');
@@ -29,6 +34,31 @@ export const TermsPage: React.FC = () => {
   const [isActive, setIsActive] = useState(true);
 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const showFeedback = (type: 'success' | 'error', text: string) => {
+    setFeedback({ type, text });
+    setTimeout(() => setFeedback(null), 4000);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingTerm(null);
+    setAcademicYear('2026-2027');
+    setSemester('FIRST_SEMESTER');
+    setStartDate('2026-08-15');
+    setEndDate('2026-12-18');
+    setIsActive(true);
+  };
+
+  const openEdit = (t: AcademicTerm) => {
+    setEditingTerm(t);
+    setAcademicYear(t.academic_year);
+    setSemester(t.semester as Semester);
+    setStartDate(t.start_date ? t.start_date.split('T')[0] : '');
+    setEndDate(t.end_date ? t.end_date.split('T')[0] : '');
+    setIsActive(t.status === 'ACTIVE');
+    setIsModalOpen(true);
+  };
 
   const { data: termsData, isLoading } = useQuery({
     queryKey: ['reference', 'terms'],
@@ -47,9 +77,8 @@ export const TermsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reference', 'terms'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      setIsModalOpen(false);
-      setFeedback({ type: 'success', text: 'Academic term registered successfully.' });
-      setTimeout(() => setFeedback(null), 4000);
+      closeModal();
+      showFeedback('success', 'Academic term registered successfully.');
     },
     onError: (err: any) => {
       const msg =
@@ -57,7 +86,33 @@ export const TermsPage: React.FC = () => {
         (Array.isArray(err?.response?.data?.errors)
           ? err.response.data.errors.join(', ')
           : 'Failed to create academic term.');
-      setFeedback({ type: 'error', text: msg });
+      showFeedback('error', msg);
+    },
+  });
+
+  const updateTermMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: any }) =>
+      referenceApi.updateTerm(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reference', 'terms'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      closeModal();
+      showFeedback('success', 'Academic term updated successfully.');
+    },
+    onError: (err: any) => {
+      showFeedback('error', err?.response?.data?.message || 'Failed to update term.');
+    },
+  });
+
+  const deleteTermMutation = useMutation({
+    mutationFn: (id: number) => referenceApi.deleteTerm(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reference', 'terms'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      showFeedback('success', 'Academic term deleted.');
+    },
+    onError: (err: any) => {
+      showFeedback('error', err?.response?.data?.message || 'Failed to delete term. It may have active offerings.');
     },
   });
 
@@ -103,15 +158,25 @@ export const TermsPage: React.FC = () => {
       return;
     }
 
-    // Convert dates to proper ISO strings and send status ('ACTIVE' | 'INACTIVE')
-    // NOTE: Avoid sending unwhitelisted keys like `is_active` which trigger 422 error
-    createTermMutation.mutate({
+    const payload = {
       academic_year: academicYear.trim(),
       semester,
       start_date: new Date(`${startDate}T00:00:00.000Z`).toISOString(),
       end_date: new Date(`${endDate}T23:59:59.000Z`).toISOString(),
-      status: isActive ? 'ACTIVE' : 'INACTIVE',
-    });
+      status: (isActive ? 'ACTIVE' : 'INACTIVE') as 'ACTIVE' | 'INACTIVE',
+    };
+
+    if (editingTerm) {
+      updateTermMutation.mutate({ id: editingTerm.id, payload });
+    } else {
+      createTermMutation.mutate(payload);
+    }
+  };
+
+  const handleDelete = (t: AcademicTerm) => {
+    if (window.confirm(`Delete term "${t.academic_year} ${t.semester}"? This cannot be undone.`)) {
+      deleteTermMutation.mutate(t.id);
+    }
   };
 
   return (
@@ -137,7 +202,7 @@ export const TermsPage: React.FC = () => {
 
         {canManageTerms && (
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => { setEditingTerm(null); setAcademicYear('2026-2027'); setSemester('FIRST_SEMESTER'); setStartDate('2026-08-15'); setEndDate('2026-12-18'); setIsActive(true); setIsModalOpen(true); }}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
           >
             <Plus size={16} />
@@ -225,33 +290,51 @@ export const TermsPage: React.FC = () => {
                     </td>
                     {canManageTerms && (
                       <td className="py-3.5 px-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            toggleTermStatusMutation.mutate({
-                              id: t.id,
-                              status: isTermActive ? 'INACTIVE' : 'ACTIVE',
-                            })
-                          }
-                          disabled={toggleTermStatusMutation.isPending}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer disabled:opacity-50 ${
-                            isTermActive
-                              ? 'border-amber-500/30 text-amber-400 hover:bg-amber-500/10'
-                              : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
-                          }`}
-                        >
-                          {isTermActive ? (
-                            <>
-                              <ToggleLeft size={14} />
-                              <span>Deactivate</span>
-                            </>
-                          ) : (
-                            <>
-                              <ToggleRight size={14} />
-                              <span>Set Active</span>
-                            </>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              toggleTermStatusMutation.mutate({
+                                id: t.id,
+                                status: isTermActive ? 'INACTIVE' : 'ACTIVE',
+                              })
+                            }
+                            disabled={toggleTermStatusMutation.isPending}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer disabled:opacity-50 ${
+                              isTermActive
+                                ? 'border-amber-500/30 text-amber-400 hover:bg-amber-500/10'
+                                : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
+                            }`}
+                          >
+                            {isTermActive ? (
+                              <>
+                                <ToggleLeft size={14} />
+                                <span>Deactivate</span>
+                              </>
+                            ) : (
+                              <>
+                                <ToggleRight size={14} />
+                                <span>Set Active</span>
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => openEdit(t)}
+                            title="Edit term"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDelete(t)}
+                              title="Delete term"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           )}
-                        </button>
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -268,10 +351,10 @@ export const TermsPage: React.FC = () => {
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <Sparkles size={16} className="text-emerald-400" />
-                Create Academic Term
+                {editingTerm ? 'Edit Academic Term' : 'Create Academic Term'}
               </h2>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={closeModal}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
               >
                 <X size={18} />
@@ -350,17 +433,19 @@ export const TermsPage: React.FC = () => {
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={closeModal}
                   className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={createTermMutation.isPending}
+                  disabled={createTermMutation.isPending || updateTermMutation.isPending}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 cursor-pointer disabled:opacity-50"
                 >
-                  {createTermMutation.isPending ? 'Saving...' : 'Register Term'}
+                  {(createTermMutation.isPending || updateTermMutation.isPending)
+                    ? 'Saving...'
+                    : (editingTerm ? 'Save Changes' : 'Register Term')}
                 </button>
               </div>
             </form>

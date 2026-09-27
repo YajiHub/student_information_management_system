@@ -218,4 +218,37 @@ describe('Academic Reference Data E2E Tests (Programs, Courses, Terms)', () => {
       expect(res.body.success).toBe(false);
     });
   });
+
+  describe('Course catalog search', () => {
+    it('should filter courses by code or title keyword (200)', async () => {
+      await prisma.course.upsert({
+        where: { course_code: 'SEARCHX' },
+        update: {},
+        create: { course_code: 'SEARCHX', course_title: 'Distributed Systems Lab', units: 3 },
+      });
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/courses?search=distributed&per_page=50')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.length).toBeGreaterThanOrEqual(1);
+      expect(
+        res.body.data.every((c: any) =>
+          `${c.course_code} ${c.course_title}`.toLowerCase().includes('distributed'),
+        ),
+      ).toBe(true);
+      expect(res.body.meta.total_records).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should return an empty page for an unmatched search term (200)', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/courses?search=zzz-no-such-course-zzz')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveLength(0);
+      expect(res.body.meta.total_records).toBe(0);
+    });
+  });
 });

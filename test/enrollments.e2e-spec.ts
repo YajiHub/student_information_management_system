@@ -299,4 +299,82 @@ describe('Enrollments & Offerings E2E Tests (Activity 2)', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.length).toBeGreaterThanOrEqual(2);
   });
+
+  it('should allow student role to view section roster with grades withheld (200)', async () => {
+    const passwordHash = await bcrypt.hash('Password123!', 10);
+    await prisma.user.upsert({
+      where: { email: 'student.roster@sims.edu' },
+      update: { role: 'STUDENT' },
+      create: {
+        name: 'Student Roster Viewer',
+        email: 'student.roster@sims.edu',
+        password_hash: passwordHash,
+        role: 'STUDENT',
+      },
+    });
+
+    const loginRes = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({ email: 'student.roster@sims.edu', password: 'Password123!' });
+    const studentToken = loginRes.body.data.access_token;
+
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/course-offerings/${offeringId}/students`)
+      .set('Authorization', `Bearer ${studentToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.length).toBeGreaterThanOrEqual(2);
+    res.body.data.forEach((entry: any) => {
+      expect(entry.grade).toBeNull();
+    });
+  });
+
+  it('should allow re-enrollment after a dropped record and clear the seat count (201)', async () => {
+    const randCode = 'REEN-' + Math.floor(Math.random() * 100000);
+    const course = await prisma.course.create({
+      data: { course_code: randCode, course_title: 'Re-enrollment Probe', units: 3 },
+    });
+    const offering = await prisma.courseOffering.create({
+      data: {
+        course_id: course.id,
+        academic_term_id: termId,
+        instructor_id: instructorId,
+        section: 'REEN-' + Math.floor(Math.random() * 100000),
+        schedule: 'TTh 13:00 - 14:30',
+        room: 'Room 601',
+        capacity: 2,
+      },
+    });
+
+    const first = await request(app.getHttpServer())
+      .post('/api/v1/enrollments')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ student_id: regularStudentId, course_offering_id: offering.id });
+    expect(first.status).toBe(201);
+    const enrollmentId = first.body.data.id;
+
+    const dropped = await request(app.getHttpServer())
+      .patch(`/api/v1/enrollments/${enrollmentId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'DROPPED' });
+    expect(dropped.status).toBe(200);
+    expect(dropped.body.data.status).toBe('DROPPED');
+
+    // A dropped enrollment must not block the student from re-enrolling
+    const reEnroll = await request(app.getHttpServer())
+      .post('/api/v1/enrollments')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ student_id: regularStudentId, course_offering_id: offering.id });
+
+    expect(reEnroll.status).toBe(201);
+    expect(reEnroll.body.data.status).toBe('ENROLLED');
+    expect(reEnroll.body.data.id).toBe(enrollmentId);
+
+    // The reactivated row is the same record: no duplicate enrollment leaked
+    const activeCount = await prisma.enrollment.count({
+      where: { course_offering_id: offering.id, status: 'ENROLLED' },
+    });
+    expect(activeCount).toBe(1);
+  });
 });

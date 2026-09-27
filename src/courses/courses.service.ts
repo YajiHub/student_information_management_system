@@ -6,6 +6,9 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { QueryCoursesDto } from './dto/query-courses.dto';
+import { buildPaginationMeta } from '../common/dto/pagination-query.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CoursesService {
@@ -32,14 +35,35 @@ export class CoursesService {
     };
   }
 
-  async findAll() {
-    const courses = await this.prisma.course.findMany({
-      orderBy: { course_code: 'asc' },
-    });
+  async findAll(query: QueryCoursesDto = new QueryCoursesDto()) {
+    const page = query.page || 1;
+    const perPage = query.per_page || 20;
+    const skip = (page - 1) * perPage;
+
+    const where: Prisma.CourseWhereInput = {};
+
+    if (query.search) {
+      const search = query.search.trim();
+      where.OR = [
+        { course_code: { contains: search, mode: 'insensitive' } },
+        { course_title: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [totalRecords, courses] = await Promise.all([
+      this.prisma.course.count({ where }),
+      this.prisma.course.findMany({
+        where,
+        skip,
+        take: perPage,
+        orderBy: { course_code: 'asc' },
+      }),
+    ]);
 
     return {
       message: 'Courses retrieved successfully.',
       data: courses,
+      meta: buildPaginationMeta(totalRecords, page, perPage),
     };
   }
 

@@ -215,7 +215,7 @@ export class CourseOfferingsService {
       program: e.student.program.code,
       year_level: e.student.year_level,
       student_type: e.student.student_type,
-      grade: e.grade,
+      grade: currentUser && currentUser.role === Role.STUDENT ? null : e.grade,
     }));
 
     return {

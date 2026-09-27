@@ -1,8 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { X, Users } from 'lucide-react';
+import { X, Users, AlertCircle } from 'lucide-react';
 import { enrollmentsApi } from '../../api/enrollments.api';
-import type { CourseOffering } from '../../types/academic.types';
+import type { CourseOffering, RosterEntry } from '../../types/academic.types';
 
 interface RosterModalProps {
   offering: CourseOffering | null;
@@ -12,13 +12,13 @@ interface RosterModalProps {
 export const RosterModal: React.FC<RosterModalProps> = ({ offering, onClose }) => {
   const isOpen = !!offering;
 
-  const { data: studentsResponse, isLoading } = useQuery({
+  const { data: rosterResponse, isLoading, isError, error } = useQuery({
     queryKey: ['offerings', offering?.id, 'students'],
     queryFn: () => (offering ? enrollmentsApi.getOfferingStudents(offering.id) : null),
     enabled: isOpen && !!offering?.id,
   });
 
-  const students = studentsResponse?.data || [];
+  const students: RosterEntry[] = rosterResponse?.data || [];
 
   if (!isOpen) return null;
 
@@ -53,6 +53,14 @@ export const RosterModal: React.FC<RosterModalProps> = ({ offering, onClose }) =
                 <span>Loading enrolled student roster...</span>
               </div>
             </div>
+          ) : isError ? (
+            <div className="py-12 text-center text-rose-400">
+              <AlertCircle size={24} className="mx-auto mb-2 text-rose-400" />
+              <p className="font-semibold text-sm">Unable to load section roster</p>
+              <p className="text-xs text-slate-400 mt-1">
+                {(error as any)?.response?.data?.message || 'Access denied or server error while retrieving roster.'}
+              </p>
+            </div>
           ) : students.length === 0 ? (
             <div className="py-12 text-center text-slate-500">
               <p>No students enrolled in this section yet.</p>
@@ -69,8 +77,8 @@ export const RosterModal: React.FC<RosterModalProps> = ({ offering, onClose }) =
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                {students.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-800/40">
+                {students.map((s, idx) => (
+                  <tr key={s.student_id || (s as any).id || s.student_number || idx} className="hover:bg-slate-800/40">
                     <td className="py-2.5 px-3 font-mono font-semibold text-slate-200">{s.student_number}</td>
                     <td className="py-2.5 px-3 font-medium text-white">
                       {s.first_name} {s.last_name}
@@ -88,7 +96,9 @@ export const RosterModal: React.FC<RosterModalProps> = ({ offering, onClose }) =
                       </span>
                     </td>
                     <td className="py-2.5 px-3 text-center">
-                      <span className="text-[11px] text-emerald-400 font-medium">{s.status}</span>
+                      <span className="text-[11px] text-emerald-400 font-medium">
+                        {s.enrollment_status}
+                      </span>
                     </td>
                   </tr>
                 ))}

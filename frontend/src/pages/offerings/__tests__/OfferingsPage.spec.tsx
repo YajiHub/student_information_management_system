@@ -7,13 +7,14 @@ import { enrollmentsApi } from '../../../api/enrollments.api';
 import { referenceApi } from '../../../api/reference.api';
 import { AuthContext } from '../../../context/AuthContext';
 import type { User } from '../../../types/auth.types';
-import type { CourseOffering, AcademicTerm, Course } from '../../../types/academic.types';
-import type { Student } from '../../../types/student.types';
+import type { CourseOffering, AcademicTerm, Course, RosterEntry } from '../../../types/academic.types';
 
 vi.mock('../../../api/enrollments.api', () => ({
   enrollmentsApi: {
     getOfferings: vi.fn(),
     createOffering: vi.fn(),
+    updateOffering: vi.fn(),
+    deleteOffering: vi.fn(),
     getOfferingStudents: vi.fn(),
   },
 }));
@@ -80,19 +81,20 @@ describe('OfferingsPage Component', () => {
     },
   ];
 
-  const mockStudents: Student[] = [
+  const mockRoster: RosterEntry[] = [
     {
-      id: 1,
+      enrollment_id: 1,
+      enrollment_date: '2026-08-20',
+      enrollment_status: 'ENROLLED',
+      student_id: 1,
       student_number: '2022-00001',
       first_name: 'John',
       last_name: 'Doe',
       email: 'john@student.edu',
-      program_id: 1,
+      program: 'BSIT',
       year_level: 3,
       student_type: 'REGULAR',
-      max_allowed_units: 23,
-      status: 'ACTIVE',
-      birth_date: '2004-01-01',
+      grade: null,
     },
   ];
 
@@ -123,7 +125,19 @@ describe('OfferingsPage Component', () => {
     vi.mocked(enrollmentsApi.getOfferingStudents).mockResolvedValue({
       success: true,
       message: 'Students fetched',
-      data: mockStudents,
+      data: mockRoster,
+    });
+
+    vi.mocked(enrollmentsApi.updateOffering).mockResolvedValue({
+      success: true,
+      message: 'Offering updated',
+      data: mockOfferings[0],
+    });
+
+    vi.mocked(enrollmentsApi.deleteOffering).mockResolvedValue({
+      success: true,
+      message: 'Offering deleted',
+      data: null,
     });
   });
 
@@ -189,5 +203,61 @@ describe('OfferingsPage Component', () => {
     expect(screen.getByRole('heading', { name: /Create Section Offering/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Section Name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Maximum Capacity/i)).toBeInTheDocument();
+  });
+
+  it('should open edit modal prefilled and submit the offering update', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('BSIT-3A')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Edit BSIT-3A/i }));
+
+    expect(screen.getByRole('heading', { name: /Edit Section Offering/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Section Name/i)).toHaveValue('BSIT-3A');
+    expect(screen.getByLabelText(/Maximum Capacity/i)).toHaveValue(30);
+
+    fireEvent.change(screen.getByLabelText(/Maximum Capacity/i), { target: { value: '45' } });
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(enrollmentsApi.updateOffering).toHaveBeenCalledWith(
+        101,
+        expect.objectContaining({ section: 'BSIT-3A', capacity: 45 }),
+      );
+    });
+
+    expect(await screen.findByText('Course section offering updated successfully.')).toBeInTheDocument();
+  });
+
+  it('should delete a section offering after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('BSIT-3A')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Delete BSIT-3A/i }));
+
+    await waitFor(() => {
+      expect(enrollmentsApi.deleteOffering).toHaveBeenCalledWith(101);
+    });
+
+    expect(await screen.findByText('Course section offering deleted.')).toBeInTheDocument();
+  });
+
+  it('should not delete a section offering when confirmation is dismissed', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('BSIT-3A')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Delete BSIT-3A/i }));
+
+    expect(enrollmentsApi.deleteOffering).not.toHaveBeenCalled();
   });
 });

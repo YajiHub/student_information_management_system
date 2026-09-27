@@ -30,7 +30,13 @@ export const referenceApi = {
 
   getTerms: async (): Promise<ApiResponse<AcademicTerm[]>> => {
     const res = await apiClient.get<ApiResponse<AcademicTerm[]>>('/academic-terms');
-    return res.data;
+    // Backend exposes term state as `status`; normalize to the `is_active`
+    // boolean every consumer of this module reads.
+    const terms = (res.data.data || []).map((term) => ({
+      ...term,
+      is_active: term.is_active ?? term.status === 'ACTIVE',
+    }));
+    return { ...res.data, data: terms };
   },
 
   createTerm: async (payload: {
@@ -55,6 +61,37 @@ export const referenceApi = {
     }
   ): Promise<ApiResponse<AcademicTerm>> => {
     const res = await apiClient.put<ApiResponse<AcademicTerm>>(`/academic-terms/${id}`, payload);
+    return res.data;
+  },
+
+  deleteTerm: async (id: number): Promise<ApiResponse<null>> => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/academic-terms/${id}`);
+    return res.data;
+  },
+
+  updateProgram: async (
+    id: number,
+    payload: { code?: string; name?: string; description?: string }
+  ): Promise<ApiResponse<Program>> => {
+    const res = await apiClient.put<ApiResponse<Program>>(`/programs/${id}`, payload);
+    return res.data;
+  },
+
+  deleteProgram: async (id: number): Promise<ApiResponse<null>> => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/programs/${id}`);
+    return res.data;
+  },
+
+  updateCourse: async (
+    id: number,
+    payload: { course_code?: string; course_title?: string; description?: string; units?: number }
+  ): Promise<ApiResponse<Course>> => {
+    const res = await apiClient.put<ApiResponse<Course>>(`/courses/${id}`, payload);
+    return res.data;
+  },
+
+  deleteCourse: async (id: number): Promise<ApiResponse<null>> => {
+    const res = await apiClient.delete<ApiResponse<null>>(`/courses/${id}`);
     return res.data;
   },
 };

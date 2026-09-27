@@ -70,7 +70,7 @@ export interface Enrollment {
   grade?: Grade;
 }
 
-export type GradeRemarks = 'PASSED' | 'FAILED' | 'INCOMPLETE' | 'DROPPED';
+export type GradeRemarks = 'PASSED' | 'FAILED' | 'CONDITIONAL' | 'INCOMPLETE' | 'DROPPED';
 
 export interface Grade {
   id: number;
@@ -83,6 +83,21 @@ export interface Grade {
   created_at?: string;
   updated_at?: string;
   enrollment?: Enrollment;
+}
+
+export interface RosterEntry {
+  enrollment_id: number;
+  enrollment_date: string;
+  enrollment_status: EnrollmentStatus;
+  student_id: number;
+  student_number: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  program: string;
+  year_level: number;
+  student_type: string;
+  grade?: Grade | null;
 }
 
 export interface TermCourseRecord {
