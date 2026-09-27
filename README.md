@@ -1,5 +1,4 @@
 # Student Information Management System (SIMS)
-## Laboratory Activities II & III (Special Topics in Software Development)
 
 [![Backend Tests](https://img.shields.io/badge/backend%20tests-83%20passing-brightgreen.svg)]()
 [![Frontend Tests](https://img.shields.io/badge/frontend%20tests-43%20passing-brightgreen.svg)]()
