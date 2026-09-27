@@ -47,7 +47,9 @@ export class EnrollmentsService {
       );
     }
 
-    // 3. Duplicate enrollment prevention (Lab Section 7.2)
+    // 3. Duplicate enrollment prevention (Lab Section 7.2).
+    // A DROPPED/COMPLETED record is reactivated instead of rejected, so capacity
+    // and unit-load checks stay the single source of truth for blocked enrollments.
     const existingEnrollment = await this.prisma.enrollment.findUnique({
       where: {
         student_id_course_offering_id: {
@@ -56,7 +58,7 @@ export class EnrollmentsService {
         },
       },
     });
-    if (existingEnrollment) {
+    if (existingEnrollment && existingEnrollment.status === 'ENROLLED') {
       throw new ConflictException(
         'Duplicate enrollment: Student is already enrolled in this course offering.',
       );
@@ -105,34 +107,45 @@ export class EnrollmentsService {
       );
     }
 
-    // 6. Create enrollment
-    const enrollment = await this.prisma.enrollment.create({
-      data: {
-        student_id: createEnrollmentDto.student_id,
-        course_offering_id: createEnrollmentDto.course_offering_id,
-        enrollment_date: createEnrollmentDto.enrollment_date
-          ? new Date(createEnrollmentDto.enrollment_date)
-          : new Date(),
-        status: createEnrollmentDto.status || 'ENROLLED',
-      },
-      include: {
-        student: {
-          select: {
-            id: true,
-            student_number: true,
-            first_name: true,
-            last_name: true,
-            student_type: true,
-          },
-        },
-        course_offering: {
-          include: {
-            course: true,
-            academic_term: true,
-          },
+    // 6. Create enrollment, or reactivate a previously dropped/completed record
+    const enrollmentData = {
+      enrollment_date: createEnrollmentDto.enrollment_date
+        ? new Date(createEnrollmentDto.enrollment_date)
+        : new Date(),
+      status: createEnrollmentDto.status || 'ENROLLED',
+    };
+    const enrollmentInclude = {
+      student: {
+        select: {
+          id: true,
+          student_number: true,
+          first_name: true,
+          last_name: true,
+          student_type: true,
         },
       },
-    });
+      course_offering: {
+        include: {
+          course: true,
+          academic_term: true,
+        },
+      },
+    };
+
+    const enrollment = existingEnrollment
+      ? await this.prisma.enrollment.update({
+          where: { id: existingEnrollment.id },
+          data: enrollmentData,
+          include: enrollmentInclude,
+        })
+      : await this.prisma.enrollment.create({
+          data: {
+            student_id: createEnrollmentDto.student_id,
+            course_offering_id: createEnrollmentDto.course_offering_id,
+            ...enrollmentData,
+          },
+          include: enrollmentInclude,
+        });
 
     return {
       message: 'Student enrolled successfully.',

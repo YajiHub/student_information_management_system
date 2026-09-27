@@ -192,7 +192,7 @@ export const ProfilePage: React.FC = () => {
                   <span className="text-[11px] uppercase font-semibold">Contact Phone</span>
                 </div>
                 <span className="text-white font-mono font-medium text-xs">
-                  {student?.phone || '+63 (917) 555-0199'}
+                  {student?.contact_number || 'Not on file'}
                 </span>
               </div>
 
@@ -209,10 +209,10 @@ export const ProfilePage: React.FC = () => {
               <div className="p-3.5 bg-slate-950/60 rounded-xl border border-slate-800/70">
                 <div className="flex items-center gap-1.5 text-slate-500 mb-1">
                   <UserIcon size={14} />
-                  <span className="text-[11px] uppercase font-semibold">Gender</span>
+                  <span className="text-[11px] uppercase font-semibold">Student Classification</span>
                 </div>
                 <span className="text-white font-medium text-xs uppercase">
-                  {student?.gender || 'Female'}
+                  {student?.student_type || user?.role}
                 </span>
               </div>
 

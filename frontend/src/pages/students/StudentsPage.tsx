@@ -263,7 +263,7 @@ export const StudentsPage: React.FC = () => {
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
               <option value="GRADUATED">Graduated</option>
-              <option value="SUSPENDED">Suspended</option>
+              <option value="DROPPED">Dropped</option>
             </select>
           </div>
         </div>

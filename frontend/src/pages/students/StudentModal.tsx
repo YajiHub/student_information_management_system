@@ -27,9 +27,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
   const [lastName, setLastName] = useState('');
   const [middleName, setMiddleName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [birthDate, setBirthDate] = useState('2004-01-01');
-  const [gender, setGender] = useState('MALE');
   const [programId, setProgramId] = useState<number>(programs[0]?.id || 1);
   const [yearLevel, setYearLevel] = useState<number>(1);
   const [studentType, setStudentType] = useState<StudentType>('REGULAR');
@@ -47,9 +45,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
       setLastName(student.last_name);
       setMiddleName(student.middle_name || '');
       setEmail(student.email);
-      setPhone(student.phone || '');
       setBirthDate(student.birth_date ? student.birth_date.split('T')[0] : '2004-01-01');
-      setGender(student.gender || 'MALE');
       setProgramId(student.program_id);
       setYearLevel(student.year_level);
       setStudentType(student.student_type);
@@ -61,9 +57,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
       setLastName('');
       setMiddleName('');
       setEmail('');
-      setPhone('');
       setBirthDate('2004-01-01');
-      setGender('MALE');
       setProgramId(programs[0]?.id || 1);
       setYearLevel(1);
       setStudentType('REGULAR');
@@ -102,9 +96,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
           last_name: lastName,
           middle_name: middleName || undefined,
           email,
-          phone: phone || undefined,
           birth_date: birthDate,
-          gender,
           program_id: Number(programId),
           year_level: Number(yearLevel),
           student_type: studentType,
@@ -119,9 +111,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
           last_name: lastName,
           middle_name: middleName || undefined,
           email,
-          phone: phone || undefined,
           birth_date: birthDate,
-          gender,
           program_id: Number(programId),
           year_level: Number(yearLevel),
           student_type: studentType,
@@ -356,7 +346,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                   <option value="ACTIVE">ACTIVE</option>
                   <option value="INACTIVE">INACTIVE</option>
                   <option value="GRADUATED">GRADUATED</option>
-                  <option value="SUSPENDED">SUSPENDED</option>
+                  <option value="DROPPED">DROPPED</option>
                 </select>
               </div>
             )}

@@ -140,12 +140,18 @@ Base URL: `http://localhost:3000/api/v1`
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/programs` | Authenticated | List all academic programs. |
-| `POST` | `/programs` | ADMIN | Create a new academic program (rejects duplicate codes with 409). |
+| `POST` | `/programs` | ADMIN, REGISTRAR | Create a new academic program (rejects duplicate codes with 409). |
+| `PUT` | `/programs/:id` | ADMIN, REGISTRAR | Update program code, name, or description. |
+| `DELETE` | `/programs/:id` | ADMIN | Delete a program (409 while students remain assigned). |
 | `GET` | `/courses` | Authenticated | List all courses with pagination and title/code search. |
-| `POST` | `/courses` | ADMIN | Create a new course (validates units 1-6 with 422). |
+| `POST` | `/courses` | ADMIN, REGISTRAR | Create a new course (validates units 1-6 with 422). |
 | `GET` | `/courses/:id` | Authenticated | Get course details by ID. |
+| `PUT` | `/courses/:id` | ADMIN, REGISTRAR | Update course code, title, units, or description. |
+| `DELETE` | `/courses/:id` | ADMIN | Delete a course (409 while offerings exist). |
 | `GET` | `/academic-terms` | Authenticated | List academic terms. |
-| `POST` | `/academic-terms` | ADMIN | Create an academic term (enforces unique year + semester). |
+| `POST` | `/academic-terms` | ADMIN, REGISTRAR | Create an academic term (enforces unique year + semester). |
+| `PUT` | `/academic-terms/:id` | ADMIN, REGISTRAR | Update term year/semester, date window, or status. |
+| `DELETE` | `/academic-terms/:id` | ADMIN | Delete an academic term (409 while offerings exist). |
 
 ### Students (`/students`)
 | Method | Endpoint | Access | Description |
@@ -162,7 +168,10 @@ Base URL: `http://localhost:3000/api/v1`
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/course-offerings` | Authenticated | List course offerings filtered by term or instructor. |
-| `POST` | `/course-offerings` | ADMIN | Create a course offering section with specified capacity limit. |
+| `POST` | `/course-offerings` | ADMIN, REGISTRAR | Create a course offering section with specified capacity limit. |
+| `GET` | `/course-offerings/:id` | Authenticated | Retrieve one offering section with its course, term, and instructor. |
+| `PUT` | `/course-offerings/:id` | ADMIN, REGISTRAR | Update section, schedule, room, capacity, course, term, or instructor. |
+| `DELETE` | `/course-offerings/:id` | ADMIN | Delete an offering section (409 while student enrollments exist). |
 | `GET` | `/course-offerings/:id/students` | ADMIN, INSTRUCTOR | List all students enrolled in an offering section. |
 | `POST` | `/enrollments` | ADMIN | Enroll a student (enforces section capacity, duplicate check, and max unit load). |
 | `DELETE` | `/enrollments/:id` | ADMIN | Drop or delete an enrollment. |

@@ -62,6 +62,11 @@ describe('DashboardPage Component', () => {
         student: {
           id: 7,
           student_number: '2026-00001',
+          first_name: 'Juan',
+          last_name: 'Dela Cruz',
+          email: 'student1@sims.edu',
+          program_id: 1,
+          status: 'ACTIVE',
           student_type: 'REGULAR',
           year_level: 4,
           max_allowed_units: 24,
@@ -137,6 +142,11 @@ describe('DashboardPage Component', () => {
         student: {
           id: 8,
           student_number: '2026-00002',
+          first_name: 'Maria',
+          last_name: 'Santos',
+          email: 'student2@sims.edu',
+          program_id: 1,
+          status: 'ACTIVE',
           student_type: 'IRREGULAR',
           year_level: 2,
           max_allowed_units: 18,

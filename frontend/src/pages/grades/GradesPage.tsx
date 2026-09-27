@@ -11,8 +11,6 @@ import {
   Users,
   Filter,
   Layers,
-  GraduationCap,
-  TrendingUp,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -134,7 +132,6 @@ export const GradesPage: React.FC = () => {
       ).toFixed(2)
       : '—';
   const passedCount = enrollments.filter((e) => e.grade?.remarks === 'PASSED').length;
-  const failedCount = enrollments.filter((e) => e.grade?.remarks === 'FAILED').length;
   const passingRate =
     gradedEnrollments.length > 0
       ? Math.round((passedCount / gradedEnrollments.length) * 100)

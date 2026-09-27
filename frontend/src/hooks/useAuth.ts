@@ -9,7 +9,9 @@ export const useAuth = (): AuthContextType => {
       token: null,
       isAuthenticated: false,
       isLoading: false,
-      login: async () => {},
+      login: async () => {
+        throw new Error('AuthProvider is not mounted above this component.');
+      },
       logout: () => {},
     };
   }

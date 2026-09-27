@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   Put,
+  Patch,
   Query,
   ParseIntPipe,
 } from '@nestjs/common';
@@ -68,6 +69,19 @@ export class StudentsController {
   @ApiResponse({ status: 404, description: 'Student not found' })
   @ApiResponse({ status: 409, description: 'Conflict: duplicate student number or email' })
   update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateStudentDto: UpdateStudentDto,
+  ) {
+    return this.studentsService.update(id, updateStudentDto);
+  }
+
+  @Patch(':id')
+  @Roles(Role.ADMIN, Role.REGISTRAR)
+  @ApiOperation({ summary: 'Partially update a student record (Admin/Registrar only)' })
+  @ApiResponse({ status: 200, description: 'Student updated successfully' })
+  @ApiResponse({ status: 404, description: 'Student not found' })
+  @ApiResponse({ status: 409, description: 'Conflict: duplicate student number or email' })
+  partialUpdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateStudentDto: UpdateStudentDto,
   ) {

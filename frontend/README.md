@@ -66,7 +66,7 @@ frontend/
     │   ├── ForbiddenPage.tsx         # 403 Access Denied screen
     │   ├── students/                 # Student directory, search, filter, and registration modal
     │   ├── academic/                 # Programs catalog, course list, academic terms
-    │   ├── offerings/                # Section offerings, real-time capacity bars, student roster
+    │   ├── offerings/                # Section offerings, capacity bars, roster, edit/delete actions
     │   ├── enrollments/              # Enrollment console, visual LoadGauge (15 vs 23 units)
     │   ├── grades/                   # Instructor grades entry (1.00 - 5.00 scale)
     │   └── records/                  # Official transcript, cumulative GPA, print layout
@@ -136,7 +136,7 @@ For streamlined assessment during presentation and grading, the Login page inclu
 | **5** | Academic Degree Program Catalog | `CoursesPage` &rarr; "Academic Programs" Tab: Lists degree programs with code, title, and description. |
 | **6** | Course Catalog Management | `CoursesPage` &rarr; "Course Catalog" Tab: Lists courses with credit units, search filter, and add modal. |
 | **7** | Academic Term Calendar Creation | `TermsPage`: Creates term with start/end date window and glowing "ACTIVE TERM" status badge. |
-| **8** | Section Offering Setup | `OfferingsPage`: Click "Create Section Offering" with capacity, schedule, room, and assigned instructor. |
+| **8** | Section Offering Setup | `OfferingsPage`: Click "Create Section Offering" with capacity, schedule, room, and assigned instructor. Per-row pencil and trash actions let Admin/Registrar edit a section and Admin delete an empty one. |
 | **9** | Course Section Enrollment | `EnrollmentsPage`: Select student, choose open section offering, click "Enroll" button. |
 | **10** | Section Capacity Full Guard | `OfferingsPage` & `EnrollmentsPage`: Sections at 100% display red `SECTION FULL` badge; enroll button disabled. |
 | **11** | Duplicate Course Enrollment Guard | `EnrollmentsPage`: Already enrolled course offerings display a disabled `Enrolled` status button. |

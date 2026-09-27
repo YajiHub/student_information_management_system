@@ -7,9 +7,10 @@ export interface StudentProfile {
   middle_name?: string | null;
   last_name: string;
   suffix?: string | null;
+  birth_date?: string;
   email: string;
-  contact_number?: string;
-  address?: string;
+  contact_number?: string | null;
+  address?: string | null;
   program_id: number;
   year_level: number;
   student_type: 'REGULAR' | 'IRREGULAR';

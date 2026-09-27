@@ -282,4 +282,33 @@ describe('Students Module E2E Tests (Activity 2)', () => {
     expect(res.body.success).toBe(false);
     expect(res.body.message).toContain('Access denied');
   });
+
+  it('should support partial updates via PATCH (200)', async () => {
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/students/${student2Id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ address: 'Updated Address, Cebu City' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.address).toBe('Updated Address, Cebu City');
+  });
+
+  it('should reject unknown fields on student creation (422 strict whitelist)', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/students')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        student_number: `2027-${Math.floor(10000 + Math.random() * 89999)}`,
+        first_name: 'Strict',
+        last_name: 'Whitelist',
+        email: `strict.${Date.now()}@sims.edu`,
+        birth_date: '2004-01-01T00:00:00.000Z',
+        program_id: 1,
+        phone: '+639170000000',
+      });
+
+    expect(res.status).toBe(422);
+    expect(res.body.success).toBe(false);
+  });
 });

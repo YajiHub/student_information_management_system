@@ -1,5 +1,5 @@
 export type StudentType = 'REGULAR' | 'IRREGULAR';
-export type StudentStatus = 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'SUSPENDED';
+export type StudentStatus = 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'DROPPED';
 
 export interface Student {
   id: number;
@@ -8,10 +8,10 @@ export interface Student {
   first_name: string;
   last_name: string;
   middle_name?: string | null;
+  suffix?: string | null;
   birth_date: string;
-  gender?: string | null;
   email: string;
-  phone?: string | null;
+  contact_number?: string | null;
   address?: string | null;
   program_id: number;
   year_level: number;
@@ -32,10 +32,10 @@ export interface CreateStudentDto {
   first_name: string;
   last_name: string;
   middle_name?: string;
+  suffix?: string;
   birth_date: string;
-  gender?: string;
   email: string;
-  phone?: string;
+  contact_number?: string;
   address?: string;
   program_id: number;
   year_level?: number;
